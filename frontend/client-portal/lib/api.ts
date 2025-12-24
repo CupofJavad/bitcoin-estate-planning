@@ -4,6 +4,7 @@
  */
 
 import { getSession } from 'next-auth/react'
+import { errorLogger } from './error-logger'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const BASE_URL = `${API_URL}/api/v1`
@@ -68,13 +69,35 @@ export const estatePlansApi = {
       const headers = await getAuthHeaders()
       const res = await fetch(`${BASE_URL}/estate-plans`, { headers })
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ detail: `Failed to fetch estate plans: ${res.status} ${res.statusText}` }))
+        const errorText = await res.text()
+        let error
+        try {
+          error = JSON.parse(errorText)
+        } catch {
+          error = { detail: `Failed to fetch estate plans: ${res.status} ${res.statusText}` }
+        }
+        
+        errorLogger.logError(
+          'Failed to fetch estate plans',
+          new Error(error.detail || 'Failed to fetch estate plans'),
+          { action: 'list_estate_plans', component: 'estatePlansApi' },
+          { method: 'GET', url: `${BASE_URL}/estate-plans`, headers: Object.fromEntries(Object.entries(headers)) },
+          { status: res.status, statusText: res.statusText, body: errorText }
+        )
+        
         throw new Error(error.detail || 'Failed to fetch estate plans')
       }
       return res.json()
     } catch (error) {
       if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new Error('Unable to connect to the server. Please ensure the backend API is running at ' + API_URL)
+        const err = new Error('Unable to connect to the server. Please ensure the backend API is running at ' + API_URL)
+        errorLogger.logError(
+          'Network error fetching estate plans',
+          err,
+          { action: 'list_estate_plans', component: 'estatePlansApi' },
+          { method: 'GET', url: `${BASE_URL}/estate-plans` }
+        )
+        throw err
       }
       throw error
     }

@@ -8,6 +8,7 @@ from app.api.v1.endpoints import (
     timelock_policies,
     bitcoin,
     auth,
+    logs,
 )
 
 api_router = APIRouter()
@@ -22,4 +23,5 @@ api_router.include_router(
     timelock_policies.router, prefix="/timelock-policies", tags=["timelock-policies"]
 )
 api_router.include_router(bitcoin.router, prefix="/bitcoin", tags=["bitcoin"])
+api_router.include_router(logs.router, tags=["logs"])
 
