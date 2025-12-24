@@ -28,20 +28,36 @@ export default function RegisterPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          full_name: formData.full_name || undefined,
+        }),
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        toast(error.detail || 'Registration failed', 'error')
+        let errorMessage = 'Registration failed'
+        try {
+          const error = await response.json()
+          errorMessage = error.detail || errorMessage
+        } catch {
+          const errorText = await response.text()
+          errorMessage = errorText || errorMessage
+        }
+        toast(errorMessage, 'error')
         return
       }
 
+      const data = await response.json()
       toast('Registration successful! Please sign in.', 'success')
       router.push('/login')
     } catch (error) {
-      toast('An error occurred during registration', 'error')
       console.error('Registration error:', error)
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        toast('Cannot connect to server. Is the backend running?', 'error')
+      } else {
+        toast('An error occurred during registration', 'error')
+      }
     } finally {
       setIsLoading(false)
     }
