@@ -39,16 +39,38 @@ export default function RegisterPage() {
         let errorMessage = 'Registration failed'
         try {
           const error = await response.json()
-          errorMessage = error.detail || errorMessage
+          // Handle FastAPI Users error format
+          if (error.detail) {
+            if (typeof error.detail === 'string') {
+              errorMessage = error.detail
+            } else if (error.detail.code) {
+              errorMessage = error.detail.code
+            } else {
+              errorMessage = JSON.stringify(error.detail)
+            }
+          } else {
+            errorMessage = JSON.stringify(error)
+          }
         } catch {
           const errorText = await response.text()
           errorMessage = errorText || errorMessage
         }
+        console.error('Registration error:', errorMessage)
         toast(errorMessage, 'error')
         return
       }
 
-      const data = await response.json()
+      // Check if response has content before parsing JSON
+      const contentType = response.headers.get('content-type')
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const data = await response.json()
+          console.log('Registration successful:', data)
+        } catch (e) {
+          console.log('Registration successful (no JSON response)')
+        }
+      }
+      
       toast('Registration successful! Please sign in.', 'success')
       router.push('/login')
     } catch (error) {
