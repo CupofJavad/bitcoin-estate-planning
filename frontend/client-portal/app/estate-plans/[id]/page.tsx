@@ -74,10 +74,13 @@ export default function EstatePlanDetailPage() {
   const handleCreateBeneficiary = async (data: any) => {
     try {
       setIsSubmitting(true)
-      await beneficiariesApi.create({
+      // Ensure allocation_percentage is a number
+      const beneficiaryData = {
         ...data,
         estate_plan_id: id,
-      })
+        allocation_percentage: Number(data.allocation_percentage),
+      }
+      await beneficiariesApi.create(beneficiaryData)
       toast('Beneficiary created successfully', 'success')
       setIsBeneficiaryModalOpen(false)
       fetchEstatePlan()
@@ -92,10 +95,13 @@ export default function EstatePlanDetailPage() {
     if (!editingBeneficiary) return
     try {
       setIsSubmitting(true)
-      await beneficiariesApi.update(editingBeneficiary.id, {
+      // Ensure allocation_percentage is a number
+      const beneficiaryData = {
         ...editingBeneficiary,
         ...data,
-      })
+        allocation_percentage: Number(data.allocation_percentage),
+      }
+      await beneficiariesApi.update(editingBeneficiary.id, beneficiaryData)
       toast('Beneficiary updated successfully', 'success')
       setIsBeneficiaryModalOpen(false)
       setEditingBeneficiary(undefined)
@@ -187,11 +193,21 @@ export default function EstatePlanDetailPage() {
     )
   }
 
-  const chartData = estatePlan.beneficiaries.map((b, index) => ({
-    name: b.name,
-    value: Number(b.allocation_percentage),
-    color: COLORS[index % COLORS.length],
-  }))
+  // Calculate chart data with absolute percentages
+  // If total allocation is less than 100%, show unallocated portion
+  const chartData = [
+    ...estatePlan.beneficiaries.map((b, index) => ({
+      name: b.name,
+      value: Number(b.allocation_percentage),
+      color: COLORS[index % COLORS.length],
+    })),
+    // Add unallocated portion if total is less than 100%
+    ...(totalAllocation < 100 ? [{
+      name: 'Unallocated',
+      value: 100 - totalAllocation,
+      color: '#e5e7eb', // Light gray for unallocated
+    }] : [])
+  ]
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -199,9 +215,9 @@ export default function EstatePlanDetailPage() {
         {/* Header */}
         <div className="mb-6">
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={() => router.push('/')}
-            className="mb-4"
+            className="mb-4 text-gray-700 border-gray-300 hover:bg-gray-50 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Estate Plans
@@ -247,7 +263,7 @@ export default function EstatePlanDetailPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${percent ? (percent * 100).toFixed(0) : 0}%`}
+                  label={({ name, value }) => `${name}: ${value.toFixed(2)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"

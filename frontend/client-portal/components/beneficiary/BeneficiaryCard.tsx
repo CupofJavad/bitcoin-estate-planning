@@ -57,10 +57,10 @@ export function BeneficiaryCard({ beneficiary, onEdit, onDelete }: BeneficiaryCa
               </p>
             </div>
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               onClick={handleCopyAddress}
-              className="ml-2 h-7 w-7 flex-shrink-0"
+              className="ml-2 h-7 w-7 flex-shrink-0 border-gray-300 hover:bg-gray-50"
             >
               <Copy className="h-3 w-3" />
             </Button>

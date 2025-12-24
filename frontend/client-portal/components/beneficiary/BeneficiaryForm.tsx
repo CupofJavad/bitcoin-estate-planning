@@ -39,8 +39,10 @@ export function BeneficiaryForm({
   })
 
   const allocationPercentage = watch('allocation_percentage')
-  const remainingAllocation = 100 - totalAllocation + (beneficiary?.allocation_percentage || 0)
-  const maxAllocation = remainingAllocation
+  // Calculate remaining allocation: 100% - (current total - this beneficiary's current allocation if editing)
+  const currentBeneficiaryAllocation = beneficiary ? Number(beneficiary.allocation_percentage) : 0
+  const remainingAllocation = 100 - (totalAllocation - currentBeneficiaryAllocation)
+  const maxAllocation = Math.max(0, remainingAllocation)
 
   useEffect(() => {
     if (beneficiary) {
@@ -48,16 +50,28 @@ export function BeneficiaryForm({
         name: beneficiary.name,
         email: beneficiary.email || '',
         bitcoin_address: beneficiary.bitcoin_address || '',
-        allocation_percentage: beneficiary.allocation_percentage,
+        allocation_percentage: Number(beneficiary.allocation_percentage),
+      })
+    } else {
+      // Reset form when creating new beneficiary
+      reset({
+        name: '',
+        email: '',
+        bitcoin_address: '',
+        allocation_percentage: 0,
       })
     }
   }, [beneficiary, reset])
 
   const onSubmitForm = async (data: BeneficiaryFormData) => {
     // Validate total allocation doesn't exceed 100%
-    const newTotal = totalAllocation - (beneficiary?.allocation_percentage || 0) + data.allocation_percentage
-    if (newTotal > 100) {
-      alert(`Total allocation cannot exceed 100%. Maximum allowed: ${maxAllocation.toFixed(2)}%`)
+    // New total = current total - this beneficiary's current allocation (if editing) + new allocation
+    const currentAllocation = beneficiary ? Number(beneficiary.allocation_percentage) : 0
+    const newTotal = totalAllocation - currentAllocation + Number(data.allocation_percentage)
+    
+    if (newTotal > 100.01) { // Allow small floating point tolerance
+      const maxAllowed = Math.max(0, 100 - (totalAllocation - currentAllocation))
+      alert(`Total allocation cannot exceed 100%. Maximum allowed: ${maxAllowed.toFixed(2)}%`)
       return
     }
     await onSubmit(data)
