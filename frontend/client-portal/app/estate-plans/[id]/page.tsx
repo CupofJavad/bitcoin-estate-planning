@@ -447,6 +447,8 @@ export default function EstatePlanDetailPage() {
         <ToastContainer />
       </div>
     </div>
+      )}
+    </ProtectedRoute>
   )
 }
 
