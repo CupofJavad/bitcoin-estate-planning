@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import estate_plans, beneficiaries, timelock_policies
+from app.api.v1.endpoints import estate_plans, beneficiaries, timelock_policies, bitcoin
 
 api_router = APIRouter()
 
@@ -11,4 +11,5 @@ api_router.include_router(beneficiaries.router, prefix="/beneficiaries", tags=["
 api_router.include_router(
     timelock_policies.router, prefix="/timelock-policies", tags=["timelock-policies"]
 )
+api_router.include_router(bitcoin.router, prefix="/bitcoin", tags=["bitcoin"])
 
