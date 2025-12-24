@@ -48,18 +48,38 @@ export interface TimelockPolicy {
 // Estate Plans API
 export const estatePlansApi = {
   list: async (user_id?: number): Promise<EstatePlan[]> => {
-    const url = user_id 
-      ? `${BASE_URL}/estate-plans?user_id=${user_id}`
-      : `${BASE_URL}/estate-plans`
-    const res = await fetch(url)
-    if (!res.ok) throw new Error('Failed to fetch estate plans')
-    return res.json()
+    try {
+      const url = user_id 
+        ? `${BASE_URL}/estate-plans?user_id=${user_id}`
+        : `${BASE_URL}/estate-plans`
+      const res = await fetch(url)
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ detail: `Failed to fetch estate plans: ${res.status} ${res.statusText}` }))
+        throw new Error(error.detail || 'Failed to fetch estate plans')
+      }
+      return res.json()
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to the server. Please ensure the backend API is running at ' + API_URL)
+      }
+      throw error
+    }
   },
 
   get: async (id: number): Promise<EstatePlanWithRelations> => {
-    const res = await fetch(`${BASE_URL}/estate-plans/${id}`)
-    if (!res.ok) throw new Error('Failed to fetch estate plan')
-    return res.json()
+    try {
+      const res = await fetch(`${BASE_URL}/estate-plans/${id}`)
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ detail: `Failed to fetch estate plan: ${res.status} ${res.statusText}` }))
+        throw new Error(error.detail || 'Failed to fetch estate plan')
+      }
+      return res.json()
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to the server. Please ensure the backend API is running at ' + API_URL)
+      }
+      throw error
+    }
   },
 
   create: async (data: Omit<EstatePlan, 'id' | 'created_at' | 'updated_at'>): Promise<EstatePlan> => {

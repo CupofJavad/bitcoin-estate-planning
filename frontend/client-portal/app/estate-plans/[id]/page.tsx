@@ -36,7 +36,8 @@ export default function EstatePlanDetailPage() {
       const data = await estatePlansApi.get(id)
       setEstatePlan(data)
     } catch (error) {
-      toast('Failed to load estate plan', 'error')
+      const message = error instanceof Error ? error.message : 'Failed to load estate plan'
+      toast(message, 'error')
       console.error('Error fetching estate plan:', error)
     } finally {
       setLoading(false)
