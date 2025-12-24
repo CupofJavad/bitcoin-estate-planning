@@ -28,6 +28,13 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
+      console.log('🔵 Registration attempt:', { 
+        email: formData.email, 
+        hasPassword: !!formData.password, 
+        full_name: formData.full_name,
+        apiUrl: `${API_URL}/api/v1/auth/register`
+      })
+      
       const response = await fetch(`${API_URL}/api/v1/auth/register`, {
         method: 'POST',
         headers: {
@@ -38,6 +45,13 @@ export default function RegisterPage() {
           password: formData.password,
           full_name: formData.full_name || undefined,
         }),
+      })
+
+      console.log('🔵 Registration response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        url: response.url
       })
 
       if (!response.ok) {
