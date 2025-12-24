@@ -1,101 +1,151 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-
-interface EstatePlan {
-  id: number
-  name: string
-  description: string | null
-  bitcoin_address: string | null
-  is_active: boolean
-  created_at: string
-  updated_at: string
-}
+import { useState, useEffect } from 'react'
+import { EstatePlan, estatePlansApi } from '@/lib/api'
+import { EstatePlanList } from '@/components/estate-plan/EstatePlanList'
+import { EstatePlanForm } from '@/components/estate-plan/EstatePlanForm'
+import { Modal } from '@/components/ui/modal'
+import { ToastContainer, toast } from '@/components/ui/toast'
 
 export default function Home() {
   const [estatePlans, setEstatePlans] = useState<EstatePlan[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingPlan, setEditingPlan] = useState<EstatePlan | undefined>()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const fetchEstatePlans = async () => {
+    try {
+      setLoading(true)
+      const data = await estatePlansApi.list()
+      setEstatePlans(data)
+    } catch (error) {
+      toast('Failed to load estate plans', 'error')
+      console.error('Error fetching estate plans:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchEstatePlans = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-        const response = await fetch(`${apiUrl}/api/v1/estate-plans`)
-        if (!response.ok) {
-          throw new Error('Failed to fetch estate plans')
-        }
-        const data = await response.json()
-        setEstatePlans(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchEstatePlans()
   }, [])
 
-  if (loading) {
-    return (
-      <main style={{ padding: '2rem', textAlign: 'center' }}>
-        <h1>Bitcoin Estate Planning Platform</h1>
-        <p>Loading...</p>
-      </main>
-    )
+  const handleCreate = () => {
+    setEditingPlan(undefined)
+    setIsModalOpen(true)
   }
 
-  if (error) {
+  const handleEdit = (estatePlan: EstatePlan) => {
+    setEditingPlan(estatePlan)
+    setIsModalOpen(true)
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this estate plan? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      await estatePlansApi.delete(id)
+      toast('Estate plan deleted successfully', 'success')
+      fetchEstatePlans()
+    } catch (error) {
+      toast('Failed to delete estate plan', 'error')
+      console.error('Error deleting estate plan:', error)
+    }
+  }
+
+  const handleSubmit = async (data: {
+    name: string
+    description: string
+    bitcoin_address: string
+    is_active: boolean
+  }) => {
+    try {
+      setIsSubmitting(true)
+      
+      if (editingPlan) {
+        await estatePlansApi.update(editingPlan.id, {
+          ...editingPlan,
+          ...data,
+          user_id: editingPlan.user_id,
+        })
+        toast('Estate plan updated successfully', 'success')
+      } else {
+        await estatePlansApi.create({
+          ...data,
+          user_id: 1, // TODO: Get from auth context
+        })
+        toast('Estate plan created successfully', 'success')
+      }
+      
+      setIsModalOpen(false)
+      setEditingPlan(undefined)
+      fetchEstatePlans()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save estate plan'
+      toast(message, 'error')
+      console.error('Error saving estate plan:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (loading) {
     return (
-      <main style={{ padding: '2rem', textAlign: 'center' }}>
-        <h1>Bitcoin Estate Planning Platform</h1>
-        <p style={{ color: 'red' }}>Error: {error}</p>
-        <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666' }}>
-          Make sure the backend API is running at {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}
-        </p>
-      </main>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading estate plans...</p>
+        </div>
+      </div>
     )
   }
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '2rem' }}>Bitcoin Estate Planning Platform</h1>
-      
-      <div style={{ marginBottom: '2rem' }}>
-        <h2>Estate Plans</h2>
-        {estatePlans.length === 0 ? (
-          <p style={{ color: '#666', marginTop: '1rem' }}>No estate plans found. Create one via the API.</p>
-        ) : (
-          <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
-            {estatePlans.map((plan) => (
-              <div
-                key={plan.id}
-                style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '1.5rem',
-                  backgroundColor: '#f9f9f9',
-                }}
-              >
-                <h3 style={{ marginBottom: '0.5rem' }}>{plan.name}</h3>
-                {plan.description && (
-                  <p style={{ color: '#666', marginBottom: '0.5rem' }}>{plan.description}</p>
-                )}
-                {plan.bitcoin_address && (
-                  <p style={{ fontFamily: 'monospace', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                    Address: {plan.bitcoin_address}
-                  </p>
-                )}
-                <p style={{ fontSize: '0.9rem', color: plan.is_active ? 'green' : 'gray' }}>
-                  Status: {plan.is_active ? 'Active' : 'Inactive'}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Bitcoin Estate Planning Platform</h1>
+          <p className="text-gray-600 mt-2">
+            Manage your Bitcoin estate plans, beneficiaries, and timelock policies
+          </p>
+        </div>
+
+        {/* Estate Plans List */}
+        <EstatePlanList
+          estatePlans={estatePlans}
+          onCreate={handleCreate}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+
+        {/* Create/Edit Modal */}
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setEditingPlan(undefined)
+          }}
+          title={editingPlan ? 'Edit Estate Plan' : 'Create Estate Plan'}
+          size="lg"
+        >
+          <EstatePlanForm
+            estatePlan={editingPlan}
+            onSubmit={handleSubmit}
+            onCancel={() => {
+              setIsModalOpen(false)
+              setEditingPlan(undefined)
+            }}
+            isLoading={isSubmitting}
+          />
+        </Modal>
+
+        {/* Toast Notifications */}
+        <ToastContainer />
       </div>
-    </main>
+    </div>
   )
 }
-
