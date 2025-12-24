@@ -29,12 +29,12 @@ echo ""
 # Test 2: Registration
 echo "2️⃣  Testing User Registration..."
 echo "   Email: $TEST_EMAIL"
-REGISTER_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${API_URL}/api/v1/auth/register" \
+REGISTER_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST "${API_URL}/api/v1/auth/register" \
     -H "Content-Type: application/json" \
     -d "{\"email\":\"${TEST_EMAIL}\",\"password\":\"${TEST_PASSWORD}\",\"full_name\":\"${TEST_NAME}\"}")
 
-HTTP_CODE=$(echo "$REGISTER_RESPONSE" | tail -1)
-BODY=$(echo "$REGISTER_RESPONSE" | head -n -1)
+HTTP_CODE=$(echo "$REGISTER_RESPONSE" | grep "HTTP_CODE:" | cut -d: -f2)
+BODY=$(echo "$REGISTER_RESPONSE" | grep -v "HTTP_CODE:")
 
 if [ "$HTTP_CODE" = "201" ]; then
     echo "   ✅ Registration successful"
@@ -49,12 +49,12 @@ echo ""
 
 # Test 3: Login
 echo "3️⃣  Testing User Login..."
-LOGIN_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${API_URL}/api/v1/auth/jwt/login" \
+LOGIN_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST "${API_URL}/api/v1/auth/jwt/login" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -d "username=${TEST_EMAIL}&password=${TEST_PASSWORD}")
 
-HTTP_CODE=$(echo "$LOGIN_RESPONSE" | tail -1)
-BODY=$(echo "$LOGIN_RESPONSE" | head -n -1)
+HTTP_CODE=$(echo "$LOGIN_RESPONSE" | grep "HTTP_CODE:" | cut -d: -f2)
+BODY=$(echo "$LOGIN_RESPONSE" | grep -v "HTTP_CODE:")
 
 if [ "$HTTP_CODE" = "200" ]; then
     echo "   ✅ Login successful"
@@ -76,11 +76,11 @@ echo ""
 # Test 4: Get Current User (Protected Endpoint)
 if [ -n "$ACCESS_TOKEN" ]; then
     echo "4️⃣  Testing Protected Endpoint (Get Current User)..."
-    USER_RESPONSE=$(curl -s -w "\n%{http_code}" "${API_URL}/api/v1/auth/users/me" \
+    USER_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" "${API_URL}/api/v1/auth/users/me" \
         -H "Authorization: Bearer ${ACCESS_TOKEN}")
 
-    HTTP_CODE=$(echo "$USER_RESPONSE" | tail -1)
-    BODY=$(echo "$USER_RESPONSE" | head -n -1)
+    HTTP_CODE=$(echo "$USER_RESPONSE" | grep "HTTP_CODE:" | cut -d: -f2)
+    BODY=$(echo "$USER_RESPONSE" | grep -v "HTTP_CODE:")
 
     if [ "$HTTP_CODE" = "200" ]; then
         echo "   ✅ Protected endpoint accessible"
@@ -97,11 +97,11 @@ fi
 # Test 5: List Estate Plans (Protected Endpoint)
 if [ -n "$ACCESS_TOKEN" ]; then
     echo "5️⃣  Testing Estate Plans Endpoint..."
-    ESTATE_RESPONSE=$(curl -s -w "\n%{http_code}" "${API_URL}/api/v1/estate-plans" \
+    ESTATE_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" "${API_URL}/api/v1/estate-plans" \
         -H "Authorization: Bearer ${ACCESS_TOKEN}")
 
-    HTTP_CODE=$(echo "$ESTATE_RESPONSE" | tail -1)
-    BODY=$(echo "$ESTATE_RESPONSE" | head -n -1)
+    HTTP_CODE=$(echo "$ESTATE_RESPONSE" | grep "HTTP_CODE:" | cut -d: -f2)
+    BODY=$(echo "$ESTATE_RESPONSE" | grep -v "HTTP_CODE:")
 
     if [ "$HTTP_CODE" = "200" ]; then
         echo "   ✅ Estate plans endpoint accessible"
