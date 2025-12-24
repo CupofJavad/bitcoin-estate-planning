@@ -8,6 +8,11 @@ import { Eye, EyeOff } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
+// Debug logging
+if (typeof window !== 'undefined') {
+  console.log('API URL:', API_URL)
+}
+
 export default function RegisterPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({

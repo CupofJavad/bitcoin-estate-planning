@@ -35,7 +35,20 @@ export const authOptions = {
             return null
           }
 
-          const loginData = await loginResponse.json()
+          // Check if response has content before parsing
+          const loginText = await loginResponse.text()
+          if (!loginText || loginText.trim() === '') {
+            console.error('Login response is empty')
+            return null
+          }
+
+          let loginData
+          try {
+            loginData = JSON.parse(loginText)
+          } catch (e) {
+            console.error('Failed to parse login response:', loginText)
+            return null
+          }
 
           // Get user info
           const userResponse = await fetch(`${API_URL}/api/v1/auth/users/me`, {
@@ -50,7 +63,20 @@ export const authOptions = {
             return null
           }
 
-          const user = await userResponse.json()
+          // Check if response has content before parsing
+          const userText = await userResponse.text()
+          if (!userText || userText.trim() === '') {
+            console.error('User response is empty')
+            return null
+          }
+
+          let user
+          try {
+            user = JSON.parse(userText)
+          } catch (e) {
+            console.error('Failed to parse user response:', userText)
+            return null
+          }
 
           return {
             id: user.id.toString(),
