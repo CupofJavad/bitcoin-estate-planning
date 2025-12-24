@@ -1,7 +1,7 @@
 """User model for authentication."""
 
-from fastapi_users.db import SQLAlchemyBaseUserTable
-from sqlalchemy import Column, String, Boolean, DateTime
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
+from sqlalchemy import Column, String, DateTime
 from sqlalchemy.sql import func
 
 from app.core.database import Base
