@@ -9,8 +9,13 @@ import asyncio
 from typing import Dict, Optional
 from datetime import datetime, timedelta
 from app.core.config import settings
-from app.core.redis import redis_client
 from app.services.bitcoin_validator import validate_bitcoin_address
+
+# Import redis client if available
+try:
+    from app.core.redis import redis_client
+except ImportError:
+    redis_client = None
 
 
 class BitcoinBalanceService:
