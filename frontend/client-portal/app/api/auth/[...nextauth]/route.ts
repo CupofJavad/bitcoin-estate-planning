@@ -30,6 +30,8 @@ export const authOptions = {
           })
 
           if (!loginResponse.ok) {
+            const errorText = await loginResponse.text()
+            console.error('Login failed:', errorText)
             return null
           }
 
@@ -43,6 +45,8 @@ export const authOptions = {
           })
 
           if (!userResponse.ok) {
+            const errorText = await userResponse.text()
+            console.error('Get user failed:', errorText)
             return null
           }
 
@@ -83,6 +87,7 @@ export const authOptions = {
   session: {
     strategy: 'jwt',
   },
+  secret: process.env.NEXTAUTH_SECRET,
 }
 
 const handler = NextAuth(authOptions)
