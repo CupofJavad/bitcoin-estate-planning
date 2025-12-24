@@ -13,9 +13,9 @@ from app.services.bitcoin_validator import validate_bitcoin_address
 
 # Import redis client if available
 try:
-    from app.core.redis import redis_client
+    from app.core.redis import get_redis
 except ImportError:
-    redis_client = None
+    get_redis = None
 
 
 class BitcoinBalanceService:
@@ -144,12 +144,13 @@ class BitcoinBalanceService:
         Returns:
             Cached balance data or None
         """
-        if not redis_client:
+        if not get_redis:
             return None
 
         try:
+            redis = await get_redis()
             cache_key = f"bitcoin:balance:{self.network}:{address}"
-            cached_data = await redis_client.get(cache_key)
+            cached_data = await redis.get(cache_key)
             if cached_data:
                 import json
                 return json.loads(cached_data)
@@ -166,13 +167,14 @@ class BitcoinBalanceService:
             address: Bitcoin address
             balance_data: Balance data to cache
         """
-        if not redis_client:
+        if not get_redis:
             return
 
         try:
+            redis = await get_redis()
             cache_key = f"bitcoin:balance:{self.network}:{address}"
             import json
-            await redis_client.setex(
+            await redis.setex(
                 cache_key, self.CACHE_TTL, json.dumps(balance_data)
             )
         except Exception:
