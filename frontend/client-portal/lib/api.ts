@@ -3,8 +3,24 @@
  * Centralized API communication with error handling
  */
 
+import { getSession } from 'next-auth/react'
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const BASE_URL = `${API_URL}/api/v1`
+
+// Helper function to get auth headers
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const session = await getSession()
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  }
+  
+  if (session?.accessToken) {
+    headers['Authorization'] = `Bearer ${session.accessToken}`
+  }
+  
+  return headers
+}
 
 export interface EstatePlan {
   id: number
@@ -47,12 +63,10 @@ export interface TimelockPolicy {
 
 // Estate Plans API
 export const estatePlansApi = {
-  list: async (user_id?: number): Promise<EstatePlan[]> => {
+  list: async (): Promise<EstatePlan[]> => {
     try {
-      const url = user_id 
-        ? `${BASE_URL}/estate-plans?user_id=${user_id}`
-        : `${BASE_URL}/estate-plans`
-      const res = await fetch(url)
+      const headers = await getAuthHeaders()
+      const res = await fetch(`${BASE_URL}/estate-plans`, { headers })
       if (!res.ok) {
         const error = await res.json().catch(() => ({ detail: `Failed to fetch estate plans: ${res.status} ${res.statusText}` }))
         throw new Error(error.detail || 'Failed to fetch estate plans')
@@ -68,7 +82,8 @@ export const estatePlansApi = {
 
   get: async (id: number): Promise<EstatePlanWithRelations> => {
     try {
-      const res = await fetch(`${BASE_URL}/estate-plans/${id}`)
+      const headers = await getAuthHeaders()
+      const res = await fetch(`${BASE_URL}/estate-plans/${id}`, { headers })
       if (!res.ok) {
         const error = await res.json().catch(() => ({ detail: `Failed to fetch estate plan: ${res.status} ${res.statusText}` }))
         throw new Error(error.detail || 'Failed to fetch estate plan')
@@ -82,10 +97,11 @@ export const estatePlansApi = {
     }
   },
 
-  create: async (data: Omit<EstatePlan, 'id' | 'created_at' | 'updated_at'>): Promise<EstatePlan> => {
+  create: async (data: Omit<EstatePlan, 'id' | 'created_at' | 'updated_at' | 'user_id'>): Promise<EstatePlan> => {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${BASE_URL}/estate-plans`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(data),
     })
     if (!res.ok) {
@@ -96,9 +112,10 @@ export const estatePlansApi = {
   },
 
   update: async (id: number, data: Partial<EstatePlan>): Promise<EstatePlan> => {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${BASE_URL}/estate-plans/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(data),
     })
     if (!res.ok) {
@@ -109,8 +126,10 @@ export const estatePlansApi = {
   },
 
   delete: async (id: number): Promise<void> => {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${BASE_URL}/estate-plans/${id}`, {
       method: 'DELETE',
+      headers,
     })
     if (!res.ok) throw new Error('Failed to delete estate plan')
   },
@@ -119,24 +138,27 @@ export const estatePlansApi = {
 // Beneficiaries API
 export const beneficiariesApi = {
   list: async (estate_plan_id?: number): Promise<Beneficiary[]> => {
+    const headers = await getAuthHeaders()
     const url = estate_plan_id
       ? `${BASE_URL}/beneficiaries?estate_plan_id=${estate_plan_id}`
       : `${BASE_URL}/beneficiaries`
-    const res = await fetch(url)
+    const res = await fetch(url, { headers })
     if (!res.ok) throw new Error('Failed to fetch beneficiaries')
     return res.json()
   },
 
   get: async (id: number): Promise<Beneficiary> => {
-    const res = await fetch(`${BASE_URL}/beneficiaries/${id}`)
+    const headers = await getAuthHeaders()
+    const res = await fetch(`${BASE_URL}/beneficiaries/${id}`, { headers })
     if (!res.ok) throw new Error('Failed to fetch beneficiary')
     return res.json()
   },
 
   create: async (data: Omit<Beneficiary, 'id' | 'created_at' | 'updated_at'>): Promise<Beneficiary> => {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${BASE_URL}/beneficiaries`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(data),
     })
     if (!res.ok) {
@@ -147,9 +169,10 @@ export const beneficiariesApi = {
   },
 
   update: async (id: number, data: Partial<Beneficiary>): Promise<Beneficiary> => {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${BASE_URL}/beneficiaries/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(data),
     })
     if (!res.ok) {
@@ -160,8 +183,10 @@ export const beneficiariesApi = {
   },
 
   delete: async (id: number): Promise<void> => {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${BASE_URL}/beneficiaries/${id}`, {
       method: 'DELETE',
+      headers,
     })
     if (!res.ok) throw new Error('Failed to delete beneficiary')
   },
@@ -170,24 +195,27 @@ export const beneficiariesApi = {
 // Timelock Policies API
 export const timelockPoliciesApi = {
   list: async (estate_plan_id?: number): Promise<TimelockPolicy[]> => {
+    const headers = await getAuthHeaders()
     const url = estate_plan_id
       ? `${BASE_URL}/timelock-policies?estate_plan_id=${estate_plan_id}`
       : `${BASE_URL}/timelock-policies`
-    const res = await fetch(url)
+    const res = await fetch(url, { headers })
     if (!res.ok) throw new Error('Failed to fetch timelock policies')
     return res.json()
   },
 
   get: async (id: number): Promise<TimelockPolicy> => {
-    const res = await fetch(`${BASE_URL}/timelock-policies/${id}`)
+    const headers = await getAuthHeaders()
+    const res = await fetch(`${BASE_URL}/timelock-policies/${id}`, { headers })
     if (!res.ok) throw new Error('Failed to fetch timelock policy')
     return res.json()
   },
 
   create: async (data: Omit<TimelockPolicy, 'id' | 'created_at' | 'updated_at'>): Promise<TimelockPolicy> => {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${BASE_URL}/timelock-policies`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(data),
     })
     if (!res.ok) {
@@ -198,9 +226,10 @@ export const timelockPoliciesApi = {
   },
 
   update: async (id: number, data: Partial<TimelockPolicy>): Promise<TimelockPolicy> => {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${BASE_URL}/timelock-policies/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(data),
     })
     if (!res.ok) {
@@ -211,8 +240,10 @@ export const timelockPoliciesApi = {
   },
 
   delete: async (id: number): Promise<void> => {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${BASE_URL}/timelock-policies/${id}`, {
       method: 'DELETE',
+      headers,
     })
     if (!res.ok) throw new Error('Failed to delete timelock policy')
   },

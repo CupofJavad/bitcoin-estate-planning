@@ -6,7 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
+from app.core.users import current_user
 from app.models.beneficiary import Beneficiary
+from app.models.estate_plan import EstatePlan
+from app.models.user import User
 from app.schemas.beneficiary import BeneficiaryCreate, BeneficiaryUpdate, BeneficiaryResponse
 
 router = APIRouter()
@@ -14,9 +17,24 @@ router = APIRouter()
 
 @router.post("/", response_model=BeneficiaryResponse, status_code=status.HTTP_201_CREATED)
 async def create_beneficiary(
-    beneficiary: BeneficiaryCreate, db: AsyncSession = Depends(get_db)
+    beneficiary: BeneficiaryCreate,
+    user: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> BeneficiaryResponse:
-    """Create a new beneficiary."""
+    """Create a new beneficiary (only for user's estate plans)."""
+    # Verify estate plan belongs to user
+    estate_plan_result = await db.execute(
+        select(EstatePlan)
+        .where(EstatePlan.id == beneficiary.estate_plan_id)
+        .where(EstatePlan.user_id == user.id)
+    )
+    estate_plan = estate_plan_result.scalar_one_or_none()
+    if not estate_plan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Estate plan not found or access denied",
+        )
+    
     db_beneficiary = Beneficiary(**beneficiary.model_dump())
     db.add(db_beneficiary)
     await db.commit()
@@ -26,10 +44,17 @@ async def create_beneficiary(
 
 @router.get("/", response_model=List[BeneficiaryResponse])
 async def list_beneficiaries(
-    estate_plan_id: int | None = None, db: AsyncSession = Depends(get_db)
+    estate_plan_id: int | None = None,
+    user: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> List[BeneficiaryResponse]:
-    """List all beneficiaries, optionally filtered by estate_plan_id."""
-    query = select(Beneficiary)
+    """List beneficiaries for user's estate plans."""
+    # Join with EstatePlan to filter by user_id
+    query = (
+        select(Beneficiary)
+        .join(EstatePlan)
+        .where(EstatePlan.user_id == user.id)
+    )
     if estate_plan_id:
         query = query.where(Beneficiary.estate_plan_id == estate_plan_id)
     result = await db.execute(query)
@@ -39,11 +64,16 @@ async def list_beneficiaries(
 
 @router.get("/{beneficiary_id}", response_model=BeneficiaryResponse)
 async def get_beneficiary(
-    beneficiary_id: int, db: AsyncSession = Depends(get_db)
+    beneficiary_id: int,
+    user: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> BeneficiaryResponse:
-    """Get a specific beneficiary."""
+    """Get a specific beneficiary (only if belongs to user's estate plan)."""
     result = await db.execute(
-        select(Beneficiary).where(Beneficiary.id == beneficiary_id)
+        select(Beneficiary)
+        .join(EstatePlan)
+        .where(Beneficiary.id == beneficiary_id)
+        .where(EstatePlan.user_id == user.id)
     )
     beneficiary = result.scalar_one_or_none()
     if not beneficiary:
@@ -57,11 +87,15 @@ async def get_beneficiary(
 async def update_beneficiary(
     beneficiary_id: int,
     beneficiary_update: BeneficiaryUpdate,
+    user: User = Depends(current_user),
     db: AsyncSession = Depends(get_db),
 ) -> BeneficiaryResponse:
-    """Update a beneficiary."""
+    """Update a beneficiary (only if belongs to user's estate plan)."""
     result = await db.execute(
-        select(Beneficiary).where(Beneficiary.id == beneficiary_id)
+        select(Beneficiary)
+        .join(EstatePlan)
+        .where(Beneficiary.id == beneficiary_id)
+        .where(EstatePlan.user_id == user.id)
     )
     beneficiary = result.scalar_one_or_none()
     if not beneficiary:
@@ -80,11 +114,16 @@ async def update_beneficiary(
 
 @router.delete("/{beneficiary_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_beneficiary(
-    beneficiary_id: int, db: AsyncSession = Depends(get_db)
+    beneficiary_id: int,
+    user: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
-    """Delete a beneficiary."""
+    """Delete a beneficiary (only if belongs to user's estate plan)."""
     result = await db.execute(
-        select(Beneficiary).where(Beneficiary.id == beneficiary_id)
+        select(Beneficiary)
+        .join(EstatePlan)
+        .where(Beneficiary.id == beneficiary_id)
+        .where(EstatePlan.user_id == user.id)
     )
     beneficiary = result.scalar_one_or_none()
     if not beneficiary:

@@ -2,10 +2,20 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import estate_plans, beneficiaries, timelock_policies, bitcoin
+from app.api.v1.endpoints import (
+    estate_plans,
+    beneficiaries,
+    timelock_policies,
+    bitcoin,
+    auth,
+)
 
 api_router = APIRouter()
 
+# Authentication routes (public)
+api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+
+# Protected routes
 api_router.include_router(estate_plans.router, prefix="/estate-plans", tags=["estate-plans"])
 api_router.include_router(beneficiaries.router, prefix="/beneficiaries", tags=["beneficiaries"])
 api_router.include_router(

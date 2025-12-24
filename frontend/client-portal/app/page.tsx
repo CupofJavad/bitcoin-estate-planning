@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession, signOut } from 'next-auth/react'
 import { EstatePlan, estatePlansApi } from '@/lib/api'
 import { EstatePlanList } from '@/components/estate-plan/EstatePlanList'
 import { EstatePlanForm } from '@/components/estate-plan/EstatePlanForm'
@@ -10,7 +11,32 @@ import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { StatCard } from '@/components/ui/stat-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SuccessAnimation } from '@/components/ui/success-animation'
-import { FileText, Users, Clock, TrendingUp } from 'lucide-react'
+import { FileText, Users, Clock, TrendingUp, LogOut } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+function UserMenu() {
+  const { data: session } = useSession()
+
+  if (!session) {
+    return null
+  }
+
+  return (
+    <div className="flex items-center gap-4">
+      <span className="text-sm text-gray-600 dark:text-gray-400">
+        {session.user?.email}
+      </span>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => signOut({ callbackUrl: '/login' })}
+      >
+        <LogOut className="h-4 w-4 mr-2" />
+        Sign Out
+      </Button>
+    </div>
+  )
+}
 
 export default function Home() {
   const [estatePlans, setEstatePlans] = useState<EstatePlan[]>([])
@@ -85,7 +111,6 @@ export default function Home() {
       } else {
         await estatePlansApi.create({
           ...data,
-          user_id: 1, // TODO: Get from auth context
         })
         setSuccessMessage('Estate plan created successfully')
         toast('Estate plan created successfully', 'success')
@@ -139,7 +164,10 @@ export default function Home() {
               Manage your Bitcoin estate plans, beneficiaries, and timelock policies
             </p>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <UserMenu />
+          </div>
         </div>
 
         {/* Dashboard Statistics */}

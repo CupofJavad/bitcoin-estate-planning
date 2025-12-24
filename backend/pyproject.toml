@@ -25,6 +25,8 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "base58>=2.1.0",  # Bitcoin address validation (Base58)
     "bech32>=1.2.0",  # Bitcoin address validation (Bech32/SegWit)
+    "fastapi-users[sqlalchemy]>=12.0.0",  # User authentication and management
+    "httpx>=0.27.0",  # HTTP client for FastAPI Users
 ]
 
 [project.optional-dependencies]

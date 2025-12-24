@@ -6,7 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
+from app.core.users import current_user
 from app.models.timelock_policy import TimelockPolicy
+from app.models.estate_plan import EstatePlan
+from app.models.user import User
 from app.schemas.timelock_policy import (
     TimelockPolicyCreate,
     TimelockPolicyUpdate,
@@ -18,9 +21,24 @@ router = APIRouter()
 
 @router.post("/", response_model=TimelockPolicyResponse, status_code=status.HTTP_201_CREATED)
 async def create_timelock_policy(
-    timelock_policy: TimelockPolicyCreate, db: AsyncSession = Depends(get_db)
+    timelock_policy: TimelockPolicyCreate,
+    user: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> TimelockPolicyResponse:
-    """Create a new timelock policy."""
+    """Create a new timelock policy (only for user's estate plans)."""
+    # Verify estate plan belongs to user
+    estate_plan_result = await db.execute(
+        select(EstatePlan)
+        .where(EstatePlan.id == timelock_policy.estate_plan_id)
+        .where(EstatePlan.user_id == user.id)
+    )
+    estate_plan = estate_plan_result.scalar_one_or_none()
+    if not estate_plan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Estate plan not found or access denied",
+        )
+    
     db_timelock_policy = TimelockPolicy(**timelock_policy.model_dump())
     db.add(db_timelock_policy)
     await db.commit()
@@ -30,10 +48,17 @@ async def create_timelock_policy(
 
 @router.get("/", response_model=List[TimelockPolicyResponse])
 async def list_timelock_policies(
-    estate_plan_id: int | None = None, db: AsyncSession = Depends(get_db)
+    estate_plan_id: int | None = None,
+    user: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> List[TimelockPolicyResponse]:
-    """List all timelock policies, optionally filtered by estate_plan_id."""
-    query = select(TimelockPolicy)
+    """List timelock policies for user's estate plans."""
+    # Join with EstatePlan to filter by user_id
+    query = (
+        select(TimelockPolicy)
+        .join(EstatePlan)
+        .where(EstatePlan.user_id == user.id)
+    )
     if estate_plan_id:
         query = query.where(TimelockPolicy.estate_plan_id == estate_plan_id)
     result = await db.execute(query)
@@ -43,11 +68,16 @@ async def list_timelock_policies(
 
 @router.get("/{timelock_policy_id}", response_model=TimelockPolicyResponse)
 async def get_timelock_policy(
-    timelock_policy_id: int, db: AsyncSession = Depends(get_db)
+    timelock_policy_id: int,
+    user: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> TimelockPolicyResponse:
-    """Get a specific timelock policy."""
+    """Get a specific timelock policy (only if belongs to user's estate plan)."""
     result = await db.execute(
-        select(TimelockPolicy).where(TimelockPolicy.id == timelock_policy_id)
+        select(TimelockPolicy)
+        .join(EstatePlan)
+        .where(TimelockPolicy.id == timelock_policy_id)
+        .where(EstatePlan.user_id == user.id)
     )
     timelock_policy = result.scalar_one_or_none()
     if not timelock_policy:
@@ -61,11 +91,15 @@ async def get_timelock_policy(
 async def update_timelock_policy(
     timelock_policy_id: int,
     timelock_policy_update: TimelockPolicyUpdate,
+    user: User = Depends(current_user),
     db: AsyncSession = Depends(get_db),
 ) -> TimelockPolicyResponse:
-    """Update a timelock policy."""
+    """Update a timelock policy (only if belongs to user's estate plan)."""
     result = await db.execute(
-        select(TimelockPolicy).where(TimelockPolicy.id == timelock_policy_id)
+        select(TimelockPolicy)
+        .join(EstatePlan)
+        .where(TimelockPolicy.id == timelock_policy_id)
+        .where(EstatePlan.user_id == user.id)
     )
     timelock_policy = result.scalar_one_or_none()
     if not timelock_policy:
@@ -84,11 +118,16 @@ async def update_timelock_policy(
 
 @router.delete("/{timelock_policy_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_timelock_policy(
-    timelock_policy_id: int, db: AsyncSession = Depends(get_db)
+    timelock_policy_id: int,
+    user: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
-    """Delete a timelock policy."""
+    """Delete a timelock policy (only if belongs to user's estate plan)."""
     result = await db.execute(
-        select(TimelockPolicy).where(TimelockPolicy.id == timelock_policy_id)
+        select(TimelockPolicy)
+        .join(EstatePlan)
+        .where(TimelockPolicy.id == timelock_policy_id)
+        .where(EstatePlan.user_id == user.id)
     )
     timelock_policy = result.scalar_one_or_none()
     if not timelock_policy:
