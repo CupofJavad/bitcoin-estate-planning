@@ -2,6 +2,8 @@
 
 Validates Bitcoin addresses using proper checksum algorithms.
 Supports P2PKH (legacy), P2SH (script hash), and Bech32 (SegWit) formats.
+
+Validation patterns inspired by Bitcoin Core's validation implementation.
 """
 
 import re

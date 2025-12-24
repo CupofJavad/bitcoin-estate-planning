@@ -1,12 +1,20 @@
-"""Bitcoin-related API endpoints."""
+"""Bitcoin-related API endpoints.
+
+Enhanced with multi-API fallback, deviation validation, and robust error handling.
+Patterns inspired by eigenwallet/core, Bitcoin Core, and BTCPay Server.
+"""
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional
+import logging
 
 from app.services.bitcoin_validator import validate_bitcoin_address, BitcoinAddressValidator
 from app.services.bitcoin_balance import get_bitcoin_balance
 from app.core.config import settings
+from app.utils.error_handling import handle_bitcoin_error, ErrorCategory
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -48,7 +56,13 @@ async def get_balance(
     address: str,
     use_cache: bool = Query(True, description="Use cached balance if available"),
 ):
-    """Get Bitcoin balance for an address.
+    """Get Bitcoin balance for an address with multi-API fallback.
+
+    **Features:**
+    - Multi-API fallback (Blockstream, Blockchain.info, Mempool.space)
+    - Deviation threshold validation (10% consistency check)
+    - Exponential backoff retry logic
+    - Comprehensive error handling
 
     **Security Notes:**
     - Address is validated before any external API calls
@@ -59,24 +73,46 @@ async def get_balance(
     **Rate Limits:**
     - Blockstream API: ~1 request/second
     - Cached results: 5 minutes TTL
+
+    **Patterns:**
+    - Multi-API fallback inspired by eigenwallet/core
+    - Error handling inspired by Bitcoin Core and BTCPay Server
     """
-    # Validate address first (security requirement)
-    validation = validate_bitcoin_address(address, network=settings.BITCOIN_NETWORK)
-    if not validation["valid"]:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid Bitcoin address: {', '.join(validation.get('errors', []))}",
+    try:
+        # Validate address first (security requirement)
+        validation = validate_bitcoin_address(address, network=settings.BITCOIN_NETWORK)
+        if not validation["valid"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid Bitcoin address: {', '.join(validation.get('errors', []))}",
+            )
+
+        # Get balance with multi-API fallback
+        balance_data = await get_bitcoin_balance(
+            address, network=settings.BITCOIN_NETWORK, use_cache=use_cache
         )
 
-    # Get balance
-    balance_data = await get_bitcoin_balance(
-        address, network=settings.BITCOIN_NETWORK, use_cache=use_cache
-    )
+        if balance_data.get("error"):
+            # Use enhanced error handling
+            bitcoin_error = handle_bitcoin_error(
+                Exception(balance_data["error"]), context="balance_check"
+            )
+            raise HTTPException(
+                status_code=503,
+                detail=bitcoin_error.user_message,
+            )
 
-    if balance_data.get("error"):
+        return balance_data
+
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        # Handle unexpected errors
+        logger.error(f"Unexpected error in balance endpoint: {str(e)}")
+        bitcoin_error = handle_bitcoin_error(e, context="balance_endpoint")
         raise HTTPException(
-            status_code=503, detail=balance_data["error"]
+            status_code=500,
+            detail=bitcoin_error.user_message,
         )
-
-    return balance_data
 
