@@ -3,6 +3,7 @@
 import { EstatePlan } from '@/lib/api'
 import { formatDate, copyToClipboard } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Copy, Edit, Trash2, ArrowRight } from 'lucide-react'
 import { toast } from '@/components/ui/toast'
 import { useRouter } from 'next/navigation'
@@ -38,15 +39,12 @@ export function EstatePlanCard({ estatePlan, onEdit, onDelete }: EstatePlanCardP
             <p className="text-sm text-gray-600 mb-3">{estatePlan.description}</p>
           )}
         </div>
-        <span
-          className={`px-2 py-1 text-xs font-medium rounded-full ${
-            estatePlan.is_active
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}
+        <Badge
+          variant={estatePlan.is_active ? 'success' : 'default'}
+          size="sm"
         >
           {estatePlan.is_active ? 'Active' : 'Inactive'}
-        </span>
+        </Badge>
       </div>
 
       {estatePlan.bitcoin_address && (

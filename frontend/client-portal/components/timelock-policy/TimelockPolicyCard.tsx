@@ -3,6 +3,7 @@
 import { TimelockPolicy } from '@/lib/api'
 import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Edit, Trash2, Clock } from 'lucide-react'
 
 interface TimelockPolicyCardProps {
@@ -25,15 +26,12 @@ export function TimelockPolicyCard({ timelockPolicy, onEdit, onDelete }: Timeloc
             <p className="text-sm text-gray-600 mb-2">{timelockPolicy.description}</p>
           )}
         </div>
-        <span
-          className={`px-2 py-1 text-xs font-medium rounded-full ${
-            timelockPolicy.is_active
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}
+        <Badge
+          variant={timelockPolicy.is_active ? 'success' : 'default'}
+          size="sm"
         >
           {timelockPolicy.is_active ? 'Active' : 'Inactive'}
-        </span>
+        </Badge>
       </div>
 
       <div className="space-y-2 mb-3">

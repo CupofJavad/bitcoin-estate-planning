@@ -11,8 +11,9 @@ import { TimelockPolicyCard } from '@/components/timelock-policy/TimelockPolicyC
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { ToastContainer, toast } from '@/components/ui/toast'
-import { ArrowLeft, Plus, Edit } from 'lucide-react'
+import { ArrowLeft, Plus, Edit, Users, Percent, Clock } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { StatCard } from '@/components/ui/stat-card'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
@@ -238,18 +239,24 @@ export default function EstatePlanDetailPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600">Beneficiaries</p>
-            <p className="text-2xl font-bold text-gray-900">{estatePlan.beneficiaries.length}</p>
-          </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600">Total Allocation</p>
-            <p className="text-2xl font-bold text-gray-900">{totalAllocation.toFixed(2)}%</p>
-          </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600">Timelock Policies</p>
-            <p className="text-2xl font-bold text-gray-900">{estatePlan.timelock_policies.length}</p>
-          </div>
+          <StatCard
+            title="Beneficiaries"
+            value={estatePlan.beneficiaries.length}
+            icon={Users}
+            description={`${estatePlan.beneficiaries.length} ${estatePlan.beneficiaries.length === 1 ? 'beneficiary' : 'beneficiaries'}`}
+          />
+          <StatCard
+            title="Total Allocation"
+            value={`${totalAllocation.toFixed(2)}%`}
+            icon={Percent}
+            description={totalAllocation < 100 ? `${(100 - totalAllocation).toFixed(2)}% remaining` : 'Fully allocated'}
+          />
+          <StatCard
+            title="Timelock Policies"
+            value={estatePlan.timelock_policies.length}
+            icon={Clock}
+            description={`${estatePlan.timelock_policies.length} ${estatePlan.timelock_policies.length === 1 ? 'policy' : 'policies'}`}
+          />
         </div>
 
         {/* Allocation Chart */}
