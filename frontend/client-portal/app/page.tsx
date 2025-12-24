@@ -11,6 +11,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { StatCard } from '@/components/ui/stat-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SuccessAnimation } from '@/components/ui/success-animation'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { FileText, Users, Clock, TrendingUp, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
