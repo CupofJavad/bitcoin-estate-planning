@@ -2,16 +2,14 @@
 requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+packages = ["app"]
+
 [project]
 name = "bitcoin-estate-planning"
 version = "0.1.0"
 description = "Bitcoin Estate Planning Platform - MVP"
 requires-python = ">=3.12"
-
-[tool.setuptools]
-packages = ["app"]
-
-[project]
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.30.0",
