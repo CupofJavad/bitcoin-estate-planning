@@ -59,10 +59,10 @@ export function EstatePlanCard({ estatePlan, onEdit, onDelete }: EstatePlanCardP
               </p>
             </div>
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               onClick={handleCopyAddress}
-              className="ml-2 h-8 w-8 flex-shrink-0"
+              className="ml-2 h-8 w-8 flex-shrink-0 border-gray-300 hover:bg-gray-50"
             >
               <Copy className="h-4 w-4" />
             </Button>

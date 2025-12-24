@@ -38,10 +38,10 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">{title}</h2>
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={onClose}
-            className="h-6 w-6"
+            className="h-6 w-6 border-gray-300 hover:bg-gray-50 text-gray-700"
           >
             <X className="h-4 w-4" />
           </Button>
