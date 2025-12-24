@@ -36,12 +36,12 @@ export function BeneficiaryCard({ beneficiary, onEdit, onDelete }: BeneficiaryCa
         </div>
         <div className="text-right">
           <div className="text-lg font-bold text-blue-600">
-            {beneficiary.allocation_percentage.toFixed(2)}%
+            {Number(beneficiary.allocation_percentage).toFixed(2)}%
           </div>
           <div className="w-16 bg-gray-200 rounded-full h-2 mt-1">
             <div
               className="bg-blue-600 h-2 rounded-full"
-              style={{ width: `${beneficiary.allocation_percentage}%` }}
+              style={{ width: `${Number(beneficiary.allocation_percentage)}%` }}
             />
           </div>
         </div>
