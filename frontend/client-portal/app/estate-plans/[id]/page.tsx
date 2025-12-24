@@ -193,28 +193,9 @@ export default function EstatePlanDetailPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading estate plan..." />
-      </div>
-    )
-  }
-
-  if (!estatePlan) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">Estate plan not found</p>
-          <Button onClick={() => router.push('/')}>Back to Home</Button>
-        </div>
-      </div>
-    )
-  }
-
   // Calculate chart data with absolute percentages
   // If total allocation is less than 100%, show unallocated portion
-  const chartData = [
+  const chartData = estatePlan ? [
     ...estatePlan.beneficiaries.map((b, index) => ({
       name: b.name,
       value: Number(b.allocation_percentage),
@@ -226,10 +207,23 @@ export default function EstatePlanDetailPage() {
       value: 100 - totalAllocation,
       color: '#e5e7eb', // Light gray for unallocated
     }] : [])
-  ]
+  ] : []
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <ProtectedRoute>
+      {loading ? (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+          <LoadingSpinner size="lg" text="Loading estate plan..." />
+        </div>
+      ) : !estatePlan ? (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">Estate plan not found</p>
+            <Button onClick={() => router.push('/')}>Back to Home</Button>
+          </div>
+        </div>
+      ) : (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <SuccessAnimation 
         show={showSuccess} 
         message={successMessage}
