@@ -4,6 +4,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.models.estate_plan import EstatePlan
@@ -48,7 +49,12 @@ async def get_estate_plan(
 ) -> EstatePlanWithRelations:
     """Get a specific estate plan with relations."""
     result = await db.execute(
-        select(EstatePlan).where(EstatePlan.id == estate_plan_id)
+        select(EstatePlan)
+        .where(EstatePlan.id == estate_plan_id)
+        .options(
+            selectinload(EstatePlan.beneficiaries),
+            selectinload(EstatePlan.timelock_policies),
+        )
     )
     estate_plan = result.scalar_one_or_none()
     if not estate_plan:
