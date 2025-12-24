@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { EstatePlanWithRelations, Beneficiary, TimelockPolicy, estatePlansApi, beneficiariesApi, timelockPoliciesApi } from '@/lib/api'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { EstatePlanForm } from '@/components/estate-plan/EstatePlanForm'
 import { BeneficiaryForm } from '@/components/beneficiary/BeneficiaryForm'
 import { BeneficiaryCard } from '@/components/beneficiary/BeneficiaryCard'

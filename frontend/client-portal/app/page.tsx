@@ -231,5 +231,6 @@ export default function Home() {
         <ToastContainer />
       </div>
     </div>
+    </ProtectedRoute>
   )
 }
