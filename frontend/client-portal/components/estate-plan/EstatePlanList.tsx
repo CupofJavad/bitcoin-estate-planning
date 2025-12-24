@@ -26,8 +26,8 @@ export function EstatePlanList({ estatePlans, onCreate, onEdit, onDelete }: Esta
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Estate Plans</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Estate Plans</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Manage your Bitcoin estate planning configurations
           </p>
         </div>
@@ -46,15 +46,15 @@ export function EstatePlanList({ estatePlans, onCreate, onEdit, onDelete }: Esta
             placeholder="Search estate plans..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-bitcoin-orange bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           />
         </div>
       </div>
 
       {/* List */}
       {filteredPlans.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-          <p className="text-gray-500 mb-2">
+        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <p className="text-gray-500 dark:text-gray-400 mb-2">
             {searchQuery ? 'No estate plans match your search' : 'No estate plans found'}
           </p>
           {!searchQuery && (

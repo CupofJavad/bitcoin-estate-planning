@@ -14,6 +14,10 @@ import { ToastContainer, toast } from '@/components/ui/toast'
 import { ArrowLeft, Plus, Edit, Users, Percent, Clock } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 import { StatCard } from '@/components/ui/stat-card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { SuccessAnimation } from '@/components/ui/success-animation'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
@@ -30,6 +34,8 @@ export default function EstatePlanDetailPage() {
   const [editingBeneficiary, setEditingBeneficiary] = useState<Beneficiary | undefined>()
   const [editingPolicy, setEditingPolicy] = useState<TimelockPolicy | undefined>()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   const fetchEstatePlan = async () => {
     try {
@@ -62,6 +68,8 @@ export default function EstatePlanDetailPage() {
         ...data,
         user_id: estatePlan.user_id,
       })
+      setSuccessMessage('Estate plan updated successfully')
+      setShowSuccess(true)
       toast('Estate plan updated successfully', 'success')
       setIsEditModalOpen(false)
       fetchEstatePlan()
@@ -82,6 +90,8 @@ export default function EstatePlanDetailPage() {
         allocation_percentage: Number(data.allocation_percentage),
       }
       await beneficiariesApi.create(beneficiaryData)
+      setSuccessMessage('Beneficiary created successfully')
+      setShowSuccess(true)
       toast('Beneficiary created successfully', 'success')
       setIsBeneficiaryModalOpen(false)
       fetchEstatePlan()
@@ -103,6 +113,8 @@ export default function EstatePlanDetailPage() {
         allocation_percentage: Number(data.allocation_percentage),
       }
       await beneficiariesApi.update(editingBeneficiary.id, beneficiaryData)
+      setSuccessMessage('Beneficiary updated successfully')
+      setShowSuccess(true)
       toast('Beneficiary updated successfully', 'success')
       setIsBeneficiaryModalOpen(false)
       setEditingBeneficiary(undefined)
@@ -118,6 +130,8 @@ export default function EstatePlanDetailPage() {
     if (!confirm('Are you sure you want to delete this beneficiary?')) return
     try {
       await beneficiariesApi.delete(beneficiaryId)
+      setSuccessMessage('Beneficiary deleted successfully')
+      setShowSuccess(true)
       toast('Beneficiary deleted successfully', 'success')
       fetchEstatePlan()
     } catch (error) {
@@ -132,6 +146,8 @@ export default function EstatePlanDetailPage() {
         ...data,
         estate_plan_id: id,
       })
+      setSuccessMessage('Timelock policy created successfully')
+      setShowSuccess(true)
       toast('Timelock policy created successfully', 'success')
       setIsPolicyModalOpen(false)
       fetchEstatePlan()
@@ -150,6 +166,8 @@ export default function EstatePlanDetailPage() {
         ...editingPolicy,
         ...data,
       })
+      setSuccessMessage('Timelock policy updated successfully')
+      setShowSuccess(true)
       toast('Timelock policy updated successfully', 'success')
       setIsPolicyModalOpen(false)
       setEditingPolicy(undefined)
@@ -165,6 +183,8 @@ export default function EstatePlanDetailPage() {
     if (!confirm('Are you sure you want to delete this timelock policy?')) return
     try {
       await timelockPoliciesApi.delete(policyId)
+      setSuccessMessage('Timelock policy deleted successfully')
+      setShowSuccess(true)
       toast('Timelock policy deleted successfully', 'success')
       fetchEstatePlan()
     } catch (error) {
@@ -174,11 +194,8 @@ export default function EstatePlanDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading estate plan...</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Loading estate plan..." />
       </div>
     )
   }
@@ -211,25 +228,33 @@ export default function EstatePlanDetailPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <SuccessAnimation 
+        show={showSuccess} 
+        message={successMessage}
+        onComplete={() => setShowSuccess(false)}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-6">
-          <Button
-            variant="outline"
-            onClick={() => router.push('/')}
-            className="mb-4 text-gray-700 border-gray-300 hover:bg-gray-50 hover:text-gray-900"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Estate Plans
-          </Button>
-          <div className="flex items-start justify-between">
+        <div className="mb-6 flex items-start justify-between">
+          <div className="flex-1">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/')}
+              className="mb-4 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Estate Plans
+            </Button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{estatePlan.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{estatePlan.name}</h1>
               {estatePlan.description && (
-                <p className="text-gray-600 mt-2">{estatePlan.description}</p>
+                <p className="text-gray-600 dark:text-gray-400 mt-2">{estatePlan.description}</p>
               )}
             </div>
+          </div>
+          <div className="flex gap-2">
+            <ThemeToggle />
             <Button onClick={() => setIsEditModalOpen(true)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit Plan

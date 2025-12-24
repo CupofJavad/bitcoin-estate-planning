@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Beneficiary } from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { Tooltip } from '@/components/ui/tooltip'
+import { HelpCircle } from 'lucide-react'
 
 interface BeneficiaryFormData {
   name: string
@@ -87,7 +89,7 @@ export function BeneficiaryForm({
           id="name"
           type="text"
           {...register('name', { required: 'Name is required' })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-bitcoin-orange bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         />
         {errors.name && (
           <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
@@ -107,7 +109,7 @@ export function BeneficiaryForm({
               message: 'Invalid email address',
             },
           })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-bitcoin-orange bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         />
         {errors.email && (
           <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -128,8 +130,11 @@ export function BeneficiaryForm({
       </div>
 
       <div>
-        <label htmlFor="allocation_percentage" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="allocation_percentage" className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Allocation Percentage <span className="text-red-500">*</span>
+          <Tooltip content="The percentage of the estate this beneficiary will receive. Total allocation cannot exceed 100%.">
+            <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+          </Tooltip>
         </label>
         <div className="flex items-center gap-3">
           <input
@@ -143,14 +148,14 @@ export function BeneficiaryForm({
               min: { value: 0, message: 'Must be at least 0%' },
               max: { value: maxAllocation, message: `Maximum ${maxAllocation.toFixed(2)}% available` },
             })}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-bitcoin-orange bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           />
           <span className="text-gray-600">%</span>
         </div>
         {errors.allocation_percentage && (
           <p className="mt-1 text-sm text-red-600">{errors.allocation_percentage.message}</p>
         )}
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
           Remaining allocation: {remainingAllocation.toFixed(2)}%
         </p>
         {allocationPercentage && (

@@ -6,6 +6,11 @@ import { EstatePlanList } from '@/components/estate-plan/EstatePlanList'
 import { EstatePlanForm } from '@/components/estate-plan/EstatePlanForm'
 import { Modal } from '@/components/ui/modal'
 import { ToastContainer, toast } from '@/components/ui/toast'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { StatCard } from '@/components/ui/stat-card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { SuccessAnimation } from '@/components/ui/success-animation'
+import { FileText, Users, Clock, TrendingUp } from 'lucide-react'
 
 export default function Home() {
   const [estatePlans, setEstatePlans] = useState<EstatePlan[]>([])
@@ -13,6 +18,8 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPlan, setEditingPlan] = useState<EstatePlan | undefined>()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   const fetchEstatePlans = async () => {
     try {
@@ -48,6 +55,8 @@ export default function Home() {
 
     try {
       await estatePlansApi.delete(id)
+      setSuccessMessage('Estate plan deleted successfully')
+      setShowSuccess(true)
       toast('Estate plan deleted successfully', 'success')
       fetchEstatePlans()
     } catch (error) {
@@ -71,17 +80,20 @@ export default function Home() {
           ...data,
           user_id: editingPlan.user_id,
         })
+        setSuccessMessage('Estate plan updated successfully')
         toast('Estate plan updated successfully', 'success')
       } else {
         await estatePlansApi.create({
           ...data,
           user_id: 1, // TODO: Get from auth context
         })
+        setSuccessMessage('Estate plan created successfully')
         toast('Estate plan created successfully', 'success')
       }
       
       setIsModalOpen(false)
       setEditingPlan(undefined)
+      setShowSuccess(true)
       fetchEstatePlans()
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save estate plan'
@@ -92,26 +104,70 @@ export default function Home() {
     }
   }
 
+  // Calculate statistics
+  const totalPlans = estatePlans.length
+  const activePlans = estatePlans.filter(p => p.is_active).length
+  const totalBeneficiaries = estatePlans.reduce((sum, plan) => sum + (plan.beneficiaries?.length || 0), 0)
+  const avgBeneficiariesPerPlan = totalPlans > 0 ? (totalBeneficiaries / totalPlans).toFixed(1) : '0'
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading estate plans...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-t-bitcoin-orange border-r-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading estate plans...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <SuccessAnimation 
+        show={showSuccess} 
+        message={successMessage}
+        onComplete={() => setShowSuccess(false)}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Bitcoin Estate Planning Platform</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your Bitcoin estate plans, beneficiaries, and timelock policies
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              Bitcoin Estate Planning Platform
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Manage your Bitcoin estate plans, beneficiaries, and timelock policies
+            </p>
+          </div>
+          <ThemeToggle />
+        </div>
+
+        {/* Dashboard Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard
+            title="Total Estate Plans"
+            value={totalPlans}
+            icon={FileText}
+            description={`${activePlans} active`}
+          />
+          <StatCard
+            title="Active Plans"
+            value={activePlans}
+            icon={TrendingUp}
+            description={`${totalPlans > 0 ? ((activePlans / totalPlans) * 100).toFixed(0) : 0}% of total`}
+          />
+          <StatCard
+            title="Total Beneficiaries"
+            value={totalBeneficiaries}
+            icon={Users}
+            description={`${avgBeneficiariesPerPlan} per plan`}
+          />
+          <StatCard
+            title="Timelock Policies"
+            value={estatePlans.reduce((sum, plan) => sum + (plan.timelock_policies?.length || 0), 0)}
+            icon={Clock}
+            description="Across all plans"
+          />
         </div>
 
         {/* Estate Plans List */}
