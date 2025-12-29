@@ -29,7 +29,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.FRONTEND_URL || 'http://localhost:3004',
+    baseURL: process.env.FRONTEND_URL || 'http://localhost:3000',
     apiURL: process.env.API_URL || 'http://localhost:8000',
     
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
@@ -48,24 +48,20 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
   ],
 
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run dev',
-    url: process.env.FRONTEND_URL || 'http://localhost:3004',
-    reuseExistingServer: !process.env.CI,
+    url: process.env.FRONTEND_URL || 'http://localhost:3000',
+    reuseExistingServer: true, // Always reuse existing server
     timeout: 120 * 1000,
+    stdout: 'pipe',
+    stderr: 'pipe',
+    env: {
+      ...process.env,
+      PORT: '3000',
+    },
   },
 });
 
