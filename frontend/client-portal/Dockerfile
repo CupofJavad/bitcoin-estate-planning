@@ -34,17 +34,21 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy necessary files
-# Next.js standalone output structure: .next/standalone contains server.js and node_modules
+# Next.js standalone output structure: .next/standalone contains app/ directory with server.js
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# The standalone build should have server.js in the root
-# If not found, it means the build didn't create standalone output correctly
-RUN ls -la /app/ | head -20 && \
-    if [ ! -f server.js ]; then \
-      echo "ERROR: server.js not found in standalone build"; \
-      find . -name "server.js" -type f; \
+# Standalone build creates nested structure: ./app/server.js
+# Move server.js to root for easier execution
+RUN if [ -f ./app/server.js ]; then \
+      cp ./app/server.js ./server.js; \
+      echo "✅ server.js copied from ./app/server.js"; \
+    elif [ -f server.js ]; then \
+      echo "✅ server.js already in root"; \
+    else \
+      echo "ERROR: server.js not found"; \
+      find . -name "server.js" -type f | head -5; \
       exit 1; \
     fi
 
