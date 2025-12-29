@@ -38,13 +38,12 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Ensure server.js exists in the root
-RUN if [ ! -f server.js ]; then \
-      if [ -f .next/standalone/server.js ]; then \
-        cp .next/standalone/server.js ./server.js; \
-      elif [ -f .next/server.js ]; then \
-        cp .next/server.js ./server.js; \
-      fi; \
+# Next.js standalone puts server.js in the root of standalone directory
+# If it's not there, check common locations
+RUN if [ ! -f server.js ] && [ ! -f ./server.js ]; then \
+      find . -name "server.js" -type f 2>/dev/null | head -1 | xargs -I {} cp {} ./server.js 2>/dev/null || \
+      (cd .next/standalone 2>/dev/null && find . -name "server.js" -type f | head -1 | xargs -I {} cp {} ../../server.js) || \
+      echo "Warning: server.js not found"; \
     fi
 
 # Set correct permissions
