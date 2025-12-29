@@ -51,6 +51,10 @@ class UserManager(BaseUserManager[User, int]):
     reset_password_token_secret = settings.SECRET_KEY
     verification_token_secret = settings.SECRET_KEY
     
+    def parse_id(self, value: str) -> int:
+        """Parse user ID from string."""
+        return int(value)
+    
     async def on_after_register(self, user: User, request=None):
         """Called after user registration."""
         print(f"User {user.id} has registered.")

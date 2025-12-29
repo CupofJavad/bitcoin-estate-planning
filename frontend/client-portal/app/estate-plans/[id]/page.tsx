@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { SuccessAnimation } from '@/components/ui/success-animation'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { BitcoinBalanceCard } from '@/components/bitcoin/BitcoinBalanceCard'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
@@ -278,6 +279,13 @@ export default function EstatePlanDetailPage() {
             description={`${estatePlan.timelock_policies.length} ${estatePlan.timelock_policies.length === 1 ? 'policy' : 'policies'}`}
           />
         </div>
+
+        {/* Bitcoin Balance */}
+        {estatePlan.bitcoin_address && (
+          <div className="mb-8">
+            <BitcoinBalanceCard address={estatePlan.bitcoin_address} />
+          </div>
+        )}
 
         {/* Allocation Chart */}
         {estatePlan.beneficiaries.length > 0 && (

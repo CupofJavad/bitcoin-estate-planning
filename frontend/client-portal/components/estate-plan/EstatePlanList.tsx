@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { EstatePlan } from '@/lib/api'
 import { EstatePlanCard } from './EstatePlanCard'
 import { Button } from '@/components/ui/button'
-import { Plus, Search } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Plus, Search, FileText } from 'lucide-react'
 
 interface EstatePlanListProps {
   estatePlans: EstatePlan[]
@@ -53,17 +54,24 @@ export function EstatePlanList({ estatePlans, onCreate, onEdit, onDelete }: Esta
 
       {/* List */}
       {filteredPlans.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <p className="text-gray-500 dark:text-gray-400 mb-2">
-            {searchQuery ? 'No estate plans match your search' : 'No estate plans found'}
-          </p>
-          {!searchQuery && (
-            <Button variant="outline" onClick={onCreate} className="mt-4">
-              <Plus className="h-4 w-4 mr-2" />
-              Create your first estate plan
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={FileText}
+          title={searchQuery ? 'No matching estate plans' : 'No estate plans yet'}
+          description={
+            searchQuery
+              ? 'Try adjusting your search terms to find what you\'re looking for.'
+              : 'Get started by creating your first Bitcoin estate plan. Define beneficiaries, set up timelock policies, and secure your digital assets.'
+          }
+          action={
+            !searchQuery
+              ? {
+                  label: 'Create Estate Plan',
+                  onClick: onCreate,
+                }
+              : undefined
+          }
+          className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPlans.map((plan) => (

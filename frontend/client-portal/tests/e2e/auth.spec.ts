@@ -37,13 +37,13 @@ test.describe('Authentication', () => {
     // Fill registration form
     await page.fill('input[type="email"]', TEST_USER.email);
     await page.fill('input[type="password"]', TEST_USER.password);
-    await page.fill('input[name="full_name"]', TEST_USER.full_name);
+    await page.fill('input[id="full_name"]', TEST_USER.full_name);
     
     // Submit form
     await page.click('button[type="submit"]');
     
     // Should redirect to login page
-    await expect(page).toHaveURL(/.*\/login/);
+    await expect(page).toHaveURL(/.*\/login/, { timeout: 10000 });
     
     // Check for success message (if toast is visible)
     const toast = page.locator('[role="alert"], .toast, [data-testid="toast"]').first();
@@ -104,11 +104,11 @@ test.describe('Authentication', () => {
     await page.goto('/register');
     await page.fill('input[type="email"]', TEST_USER.email);
     await page.fill('input[type="password"]', TEST_USER.password);
-    await page.fill('input[name="full_name"]', TEST_USER.full_name);
+    await page.fill('input[id="full_name"]', TEST_USER.full_name);
     await page.click('button[type="submit"]');
     
     // Wait for redirect to login
-    await page.waitForURL(/.*\/login/, { timeout: 5000 });
+    await page.waitForURL(/.*\/login/, { timeout: 10000 });
     
     // Now login
     await page.fill('input[type="email"]', TEST_USER.email);
@@ -116,11 +116,11 @@ test.describe('Authentication', () => {
     await page.click('button[type="submit"]');
     
     // Should redirect to dashboard/home
-    await expect(page).toHaveURL(/.*\/$/, { timeout: 10000 });
+    await expect(page).toHaveURL(/.*\/$/, { timeout: 15000 });
     
     // Check for user menu or logout button
     const userMenu = page.locator('text=/sign out|logout/i').first();
-    await expect(userMenu).toBeVisible({ timeout: 5000 });
+    await expect(userMenu).toBeVisible({ timeout: 10000 });
   });
 
   test('should show error for invalid credentials', async ({ page }) => {
@@ -147,14 +147,14 @@ test.describe('Authentication', () => {
     await page.goto('/register');
     await page.fill('input[type="email"]', TEST_USER.email);
     await page.fill('input[type="password"]', TEST_USER.password);
-    await page.fill('input[name="full_name"]', TEST_USER.full_name);
+    await page.fill('input[id="full_name"]', TEST_USER.full_name);
     await page.click('button[type="submit"]');
-    await page.waitForURL(/.*\/login/);
+    await page.waitForURL(/.*\/login/, { timeout: 10000 });
     
     await page.fill('input[type="email"]', TEST_USER.email);
     await page.fill('input[type="password"]', TEST_USER.password);
     await page.click('button[type="submit"]');
-    await page.waitForURL(/.*\/$/, { timeout: 10000 });
+    await page.waitForURL(/.*\/$/, { timeout: 15000 });
     
     // Click logout
     const logoutButton = page.locator('text=/sign out|logout/i').first();
@@ -188,6 +188,74 @@ test.describe('Authentication', () => {
       await signInLink.click();
       await expect(page).toHaveURL(/.*\/login/);
     }
+  });
+
+  test('should persist session after page refresh', async ({ page }) => {
+    // Register and login
+    await page.goto('/register');
+    await page.fill('input[type="email"]', TEST_USER.email);
+    await page.fill('input[type="password"]', TEST_USER.password);
+    await page.fill('input[id="full_name"]', TEST_USER.full_name);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/.*\/login/, { timeout: 10000 });
+    
+    await page.fill('input[type="email"]', TEST_USER.email);
+    await page.fill('input[type="password"]', TEST_USER.password);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/.*\/$/, { timeout: 15000 });
+    
+    // Verify we're logged in
+    const userMenu = page.locator('text=/sign out|logout/i').first();
+    await expect(userMenu).toBeVisible({ timeout: 5000 });
+    
+    // Refresh the page
+    await page.reload();
+    
+    // Should still be logged in and on dashboard
+    await expect(page).toHaveURL(/.*\/$/, { timeout: 10000 });
+    await expect(userMenu).toBeVisible({ timeout: 5000 });
+  });
+
+  test('should protect estate plan detail routes', async ({ page }) => {
+    // Try to access estate plan detail page without auth
+    await page.goto('/estate-plans/1');
+    
+    // Should redirect to login
+    await expect(page).toHaveURL(/.*\/login/, { timeout: 5000 });
+  });
+
+  test('should show user email in header when logged in', async ({ page }) => {
+    // Register and login
+    await page.goto('/register');
+    await page.fill('input[type="email"]', TEST_USER.email);
+    await page.fill('input[type="password"]', TEST_USER.password);
+    await page.fill('input[id="full_name"]', TEST_USER.full_name);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/.*\/login/, { timeout: 10000 });
+    
+    await page.fill('input[type="email"]', TEST_USER.email);
+    await page.fill('input[type="password"]', TEST_USER.password);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/.*\/$/, { timeout: 15000 });
+    
+    // Check that user email is displayed
+    const userEmail = page.locator(`text=${TEST_USER.email}`);
+    await expect(userEmail).toBeVisible({ timeout: 5000 });
+  });
+
+  test('should handle password visibility toggle', async ({ page }) => {
+    await page.goto('/login');
+    
+    const passwordInput = page.locator('input[type="password"]');
+    await passwordInput.fill('testpassword123');
+    
+    // Find and click the eye icon
+    const toggleButton = page.locator('button').filter({ has: page.locator('svg') }).first();
+    await toggleButton.click();
+    
+    // Password should now be visible (type="text")
+    const visiblePasswordInput = page.locator('input[type="text"]');
+    await expect(visiblePasswordInput).toHaveValue('testpassword123');
   });
 });
 

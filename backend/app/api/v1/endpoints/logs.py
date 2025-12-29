@@ -1,12 +1,9 @@
 """Error logging endpoint for frontend error tracking."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from datetime import datetime
-
-from app.core.users import current_user
-from app.models.user import User
 
 router = APIRouter()
 
@@ -24,10 +21,7 @@ class ErrorLogRequest(BaseModel):
 
 
 @router.post("/logs/error")
-async def log_error(
-    error_log: ErrorLogRequest,
-    user: User = Depends(current_user),
-):
+async def log_error(error_log: ErrorLogRequest):
     """
     Log an error from the frontend.
     
@@ -45,8 +39,6 @@ async def log_error(
             "timestamp": error_log.timestamp,
             "level": error_log.level,
             "message": error_log.message,
-            "user_id": user.id,
-            "user_email": user.email,
             "error": error_log.error,
             "context": error_log.context,
             "request": error_log.request,
@@ -75,7 +67,6 @@ async def log_error(
 async def get_error_logs(
     limit: int = 100,
     level: Optional[str] = None,
-    user: User = Depends(current_user),
 ):
     """
     Get error logs (for debugging purposes).

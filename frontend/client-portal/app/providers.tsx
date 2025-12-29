@@ -6,18 +6,40 @@ import { errorLogger } from '@/lib/error-logger'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Log any session errors
-    const originalError = console.error
-    console.error = (...args) => {
-      if (args[0]?.includes?.('next-auth') || args[0]?.includes?.('getSession')) {
-        errorLogger.logError(
-          'NextAuth session error',
-          args[0] instanceof Error ? args[0] : new Error(String(args[0])),
-          { action: 'session_error', component: 'SessionProvider' }
-        )
+    // Log any session errors - use a safer approach
+    const originalError = console.error.bind(console)
+    const wrappedError = (...args: any[]) => {
+      try {
+        const firstArg = args[0]
+        const firstArgStr = typeof firstArg === 'string' ? firstArg : String(firstArg)
+        
+        if (firstArgStr.includes('next-auth') || firstArgStr.includes('getSession')) {
+          const error = firstArg instanceof Error 
+            ? firstArg 
+            : new Error(firstArgStr)
+          errorLogger.logError(
+            'NextAuth session error',
+            error,
+            { action: 'session_error', component: 'SessionProvider' }
+          )
+        }
+        // Call original error function
+        originalError(...args)
+      } catch (err) {
+        // Fallback if error logging fails - use native console.error
+        try {
+          originalError('Error in error handler:', err)
+          originalError(...args)
+        } catch {
+          // Last resort - direct console access
+          if (typeof window !== 'undefined' && window.console && window.console.error) {
+            window.console.error(...args)
+          }
+        }
       }
-      originalError.apply(console, args)
     }
+    
+    console.error = wrappedError
     
     return () => {
       console.error = originalError

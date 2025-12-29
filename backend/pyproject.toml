@@ -30,6 +30,7 @@ dependencies = [
     "bech32>=1.2.0",  # Bitcoin address validation (Bech32/SegWit)
     "fastapi-users[sqlalchemy]>=12.0.0",  # User authentication and management
     "httpx>=0.27.0",  # HTTP client for FastAPI Users
+    "openai>=1.0.0",  # OpenAI API for chatbot
 ]
 
 [project.optional-dependencies]

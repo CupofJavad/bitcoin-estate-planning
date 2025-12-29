@@ -52,16 +52,16 @@ export function ToastContainer() {
         <div
           key={toast.id}
           className={cn(
-            'flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] max-w-md',
+            'flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] max-w-md transition-all duration-300 ease-in-out animate-in slide-in-from-right',
             {
-              'bg-green-50 text-green-800 border border-green-200': toast.type === 'success',
-              'bg-red-50 text-red-800 border border-red-200': toast.type === 'error',
-              'bg-blue-50 text-blue-800 border border-blue-200': toast.type === 'info',
-              'bg-yellow-50 text-yellow-800 border border-yellow-200': toast.type === 'warning',
+              'bg-green-50 text-green-800 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800': toast.type === 'success',
+              'bg-red-50 text-red-800 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800': toast.type === 'error',
+              'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800': toast.type === 'info',
+              'bg-yellow-50 text-yellow-800 border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800': toast.type === 'warning',
             }
           )}
         >
-          {toast.type === 'success' && <CheckCircle className="h-5 w-5" />}
+          {toast.type === 'success' && <CheckCircle className="h-5 w-5 animate-pulse" />}
           {toast.type === 'error' && <XCircle className="h-5 w-5" />}
           {toast.type === 'info' && <Info className="h-5 w-5" />}
           {toast.type === 'warning' && <AlertCircle className="h-5 w-5" />}
@@ -71,7 +71,7 @@ export function ToastContainer() {
               toasts = toasts.filter(t => t.id !== toast.id)
               notify()
             }}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <X className="h-4 w-4" />
           </button>

@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     # CORS - can be comma-separated string or list
     CORS_ORIGINS: Union[str, List[str]] = "http://localhost:3000,http://localhost:3001"
 
+    # Chatbot
+    OPENAI_API_KEY: str = ""
+    CHATBOT_MODEL: str = "gpt-3.5-turbo"
+    CHATBOT_MAX_TOKENS: int = 500
+    CHATBOT_TEMPERATURE: float = 0.7
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:

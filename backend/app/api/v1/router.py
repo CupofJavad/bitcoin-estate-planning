@@ -9,6 +9,7 @@ from app.api.v1.endpoints import (
     bitcoin,
     auth,
     logs,
+    chatbot,
 )
 
 api_router = APIRouter()
@@ -23,5 +24,6 @@ api_router.include_router(
     timelock_policies.router, prefix="/timelock-policies", tags=["timelock-policies"]
 )
 api_router.include_router(bitcoin.router, prefix="/bitcoin", tags=["bitcoin"])
+api_router.include_router(chatbot.router, prefix="/chatbot", tags=["chatbot"])
 api_router.include_router(logs.router, tags=["logs"])
 

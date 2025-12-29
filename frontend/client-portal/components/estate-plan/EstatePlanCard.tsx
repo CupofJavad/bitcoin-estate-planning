@@ -29,14 +29,14 @@ export function EstatePlanCard({ estatePlan, onEdit, onDelete }: EstatePlanCardP
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] cursor-pointer group">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1 group-hover:text-bitcoin-orange transition-colors">
             {estatePlan.name}
           </h3>
           {estatePlan.description && (
-            <p className="text-sm text-gray-600 mb-3">{estatePlan.description}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{estatePlan.description}</p>
           )}
         </div>
         <Badge
@@ -48,11 +48,11 @@ export function EstatePlanCard({ estatePlan, onEdit, onDelete }: EstatePlanCardP
       </div>
 
       {estatePlan.bitcoin_address && (
-        <div className="mb-4 p-3 bg-gray-50 rounded border border-gray-200">
+        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600 transition-colors">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-500 mb-1">Bitcoin Address</p>
-              <p className="text-sm font-mono text-gray-900 truncate">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Bitcoin Address</p>
+              <p className="text-sm font-mono text-gray-900 dark:text-gray-100 truncate">
                 {estatePlan.bitcoin_address}
               </p>
             </div>
@@ -60,7 +60,7 @@ export function EstatePlanCard({ estatePlan, onEdit, onDelete }: EstatePlanCardP
               variant="outline"
               size="icon"
               onClick={handleCopyAddress}
-              className="ml-2 h-8 w-8 flex-shrink-0 border-gray-300 hover:bg-gray-50"
+              className="ml-2 h-8 w-8 flex-shrink-0 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 hover:scale-110 transition-transform"
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -68,7 +68,7 @@ export function EstatePlanCard({ estatePlan, onEdit, onDelete }: EstatePlanCardP
         </div>
       )}
 
-      <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
         <span>Created: {formatDate(estatePlan.created_at)}</span>
         <span>Updated: {formatDate(estatePlan.updated_at)}</span>
       </div>
@@ -78,15 +78,16 @@ export function EstatePlanCard({ estatePlan, onEdit, onDelete }: EstatePlanCardP
           variant="default"
           size="sm"
           onClick={handleViewDetails}
-          className="flex-1"
+          className="flex-1 hover:scale-105 transition-transform"
         >
           View Details
-          <ArrowRight className="h-4 w-4 ml-2" />
+          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => onEdit(estatePlan)}
+          className="hover:scale-110 transition-transform"
         >
           <Edit className="h-4 w-4" />
         </Button>
@@ -94,6 +95,7 @@ export function EstatePlanCard({ estatePlan, onEdit, onDelete }: EstatePlanCardP
           variant="destructive"
           size="sm"
           onClick={() => onDelete(estatePlan.id)}
+          className="hover:scale-110 transition-transform"
         >
           <Trash2 className="h-4 w-4" />
         </Button>

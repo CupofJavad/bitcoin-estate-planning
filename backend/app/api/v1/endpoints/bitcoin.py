@@ -40,7 +40,18 @@ async def validate_address(request: AddressValidationRequest):
     Validates the address format and checksum before any external API calls.
     This is a security best practice - always validate locally first.
     """
-    network = request.network or settings.BITCOIN_NETWORK
+    # Auto-detect network from address if not explicitly provided.
+    # This allows using both mainnet and testnet addresses in the UI.
+    network = request.network
+    if not network:
+        addr = request.address.strip()
+        if addr.startswith("bc1") or addr.startswith(("1", "3")):
+            network = "mainnet"
+        elif addr.startswith("tb1"):
+            network = "testnet"
+        else:
+            network = settings.BITCOIN_NETWORK
+
     result = validate_bitcoin_address(request.address, network=network)
 
     return AddressValidationResponse(

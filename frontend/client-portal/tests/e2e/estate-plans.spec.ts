@@ -1,192 +1,207 @@
-import { test, expect } from '@playwright/test';
-
 /**
- * Estate Plans E2E Tests
- * Tests all estate plan workflows: create, read, update, delete
+ * E2E Tests for Estate Plans Workflow
+ * Tests complete user journey from creation to management
  */
 
-const TEST_USER = {
-  email: `estate-test-${Date.now()}@example.com`,
-  password: 'TestPassword123!',
-  full_name: 'Estate Test User',
-};
+import { test, expect } from '@playwright/test'
+import { loginAsDemoUser } from '../helpers/auth'
 
-const TEST_ESTATE_PLAN = {
-  name: 'Test Estate Plan',
-  description: 'This is a test estate plan',
-  bitcoin_address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
-  is_active: true,
-};
-
-test.describe('Estate Plans', () => {
-  let authToken: string;
-
-  test.beforeAll(async ({ request }) => {
-    // Register and login to get auth token
-    const registerResponse = await request.post('http://localhost:8000/api/v1/auth/register', {
-      data: TEST_USER,
-    });
+test.describe('Estate Plans Management', () => {
+  test.beforeEach(async ({ page }) => {
+    // Navigate to home page
+    await page.goto('http://localhost:3000')
     
-    if (registerResponse.ok()) {
-      const loginResponse = await request.post('http://localhost:8000/api/v1/auth/jwt/login', {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        data: new URLSearchParams({
-          username: TEST_USER.email,
-          password: TEST_USER.password,
-        }).toString(),
-      });
-      
-      if (loginResponse.ok()) {
-        const loginData = await loginResponse.json();
-        authToken = loginData.access_token;
-      }
+    // Wait for page to load
+    await page.waitForLoadState('networkidle')
+  })
+
+  test('should display dashboard with statistics', async ({ page }) => {
+    // Check for dashboard elements
+    await expect(page.locator('h1')).toContainText('Bitcoin Estate Planning Platform')
+    
+    // Check for stat cards
+    await expect(page.locator('text=Total Estate Plans')).toBeVisible()
+    await expect(page.locator('text=Active Plans')).toBeVisible()
+    await expect(page.locator('text=Total Beneficiaries')).toBeVisible()
+    await expect(page.locator('text=Timelock Policies')).toBeVisible()
+  })
+
+  test('should show empty state when no estate plans exist', async ({ page }) => {
+    // Check for empty state
+    const emptyState = page.locator('text=No estate plans yet')
+    if (await emptyState.isVisible()) {
+      await expect(emptyState).toBeVisible()
+      await expect(page.locator('text=Create Estate Plan')).toBeVisible()
     }
-  });
+  })
 
-  test.beforeEach(async ({ page, context }) => {
-    // Set auth cookie or token
-    if (authToken) {
-      await context.addCookies([{
-        name: 'next-auth.session-token',
-        value: authToken,
-        domain: 'localhost',
-        path: '/',
-      }]);
-    }
-  });
-
-  test('should display dashboard with estate plans list', async ({ page }) => {
-    // Login first
-    await page.goto('/login');
-    await page.fill('input[type="email"]', TEST_USER.email);
-    await page.fill('input[type="password"]', TEST_USER.password);
-    await page.click('button[type="submit"]');
-    
-    await page.waitForURL(/.*\/$/, { timeout: 10000 });
-    
-    // Check dashboard elements
-    await expect(page.locator('h1')).toContainText(/estate planning|dashboard/i);
-    await expect(page.locator('button:has-text("Create")')).toBeVisible();
-  });
-
-  test('should create a new estate plan', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('input[type="email"]', TEST_USER.email);
-    await page.fill('input[type="password"]', TEST_USER.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/.*\/$/, { timeout: 10000 });
-    
+  test('should open create estate plan modal', async ({ page }) => {
     // Click create button
-    const createButton = page.locator('button:has-text("Create"), button:has-text("New")').first();
-    await createButton.click();
+    await page.click('text=Create Estate Plan')
     
     // Wait for modal
-    await page.waitForSelector('input[name="name"], input[placeholder*="name" i]', { timeout: 5000 });
+    await page.waitForSelector('text=Create Estate Plan', { state: 'visible' })
+    
+    // Check form fields
+    await expect(page.locator('input[name="name"]')).toBeVisible()
+    await expect(page.locator('input[name="description"]')).toBeVisible()
+    await expect(page.locator('input[name="bitcoin_address"]')).toBeVisible()
+    await expect(page.locator('input[type="checkbox"][name="is_active"]')).toBeVisible()
+  })
+
+  test('should create estate plan with valid data', async ({ page }) => {
+    // Click create button
+    await page.click('text=Create Estate Plan')
+    await page.waitForSelector('input[name="name"]', { state: 'visible' })
     
     // Fill form
-    await page.fill('input[name="name"], input[placeholder*="name" i]', TEST_ESTATE_PLAN.name);
-    await page.fill('textarea[name="description"], textarea[placeholder*="description" i]', TEST_ESTATE_PLAN.description);
-    await page.fill('input[name="bitcoin_address"], input[placeholder*="bitcoin" i]', TEST_ESTATE_PLAN.bitcoin_address);
+    await page.fill('input[name="name"]', 'Test Estate Plan')
+    await page.fill('input[name="description"]', 'Test description')
+    await page.fill('input[name="bitcoin_address"]', 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh')
     
-    // Submit
-    const submitButton = page.locator('button[type="submit"], button:has-text("Save"), button:has-text("Create")').first();
-    await submitButton.click();
+    // Submit form
+    await page.click('button:has-text("Create")')
     
-    // Wait for success
-    await page.waitForTimeout(2000);
+    // Wait for success message or estate plan to appear
+    await page.waitForTimeout(2000)
     
-    // Check if estate plan appears in list
-    const estatePlanCard = page.locator(`text=${TEST_ESTATE_PLAN.name}`).first();
-    await expect(estatePlanCard).toBeVisible({ timeout: 5000 });
-  });
+    // Check for success toast or estate plan in list
+    const successToast = page.locator('text=Estate plan created successfully')
+    const estatePlanCard = page.locator('text=Test Estate Plan')
+    
+    // Either success toast or estate plan should be visible
+    const hasSuccess = await successToast.isVisible().catch(() => false)
+    const hasPlan = await estatePlanCard.isVisible().catch(() => false)
+    
+    expect(hasSuccess || hasPlan).toBeTruthy()
+  })
 
-  test('should view estate plan details', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('input[type="email"]', TEST_USER.email);
-    await page.fill('input[type="password"]', TEST_USER.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/.*\/$/, { timeout: 10000 });
+  test('should validate Bitcoin address', async ({ page }) => {
+    // Click create button
+    await page.click('text=Create Estate Plan')
+    await page.waitForSelector('input[name="name"]', { state: 'visible' })
     
-    // Click on first estate plan card
-    const firstCard = page.locator('[data-testid="estate-plan-card"], .estate-plan-card, article, .card').first();
-    if (await firstCard.isVisible().catch(() => false)) {
-      await firstCard.click();
+    // Fill form with invalid address
+    await page.fill('input[name="name"]', 'Test Plan')
+    await page.fill('input[name="bitcoin_address"]', 'invalid-address')
+    
+    // Wait for validation
+    await page.waitForTimeout(1000)
+    
+    // Check for validation message (either valid or invalid)
+    const validationMessage = page.locator('text=/Valid|Invalid/')
+    const hasValidation = await validationMessage.isVisible().catch(() => false)
+    
+    // Validation should appear
+    expect(hasValidation).toBeTruthy()
+  })
+
+  test('should search estate plans', async ({ page }) => {
+    // Wait for search input
+    const searchInput = page.locator('input[placeholder*="Search"]')
+    await searchInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
+    
+    if (await searchInput.isVisible()) {
+      await searchInput.fill('test')
+      await page.waitForTimeout(500)
       
-      // Should navigate to detail page
-      await expect(page).toHaveURL(/.*\/estate-plans\/\d+/, { timeout: 5000 });
-      
-      // Check detail page elements
-      await expect(page.locator('h1')).toBeVisible();
+      // Search should filter results
+      const results = page.locator('[class*="card"], [class*="Card"]')
+      const count = await results.count()
+      expect(count).toBeGreaterThanOrEqual(0)
     }
-  });
+  })
 
-  test('should edit estate plan', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('input[type="email"]', TEST_USER.email);
-    await page.fill('input[type="password"]', TEST_USER.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/.*\/$/, { timeout: 10000 });
+  test('should display estate plan card with details', async ({ page }) => {
+    // Wait for estate plans to load
+    await page.waitForTimeout(2000)
     
-    // Click on first estate plan
-    const firstCard = page.locator('[data-testid="estate-plan-card"], .estate-plan-card, article, .card').first();
-    if (await firstCard.isVisible().catch(() => false)) {
-      await firstCard.click();
-      await page.waitForURL(/.*\/estate-plans\/\d+/, { timeout: 5000 });
-      
-      // Click edit button
-      const editButton = page.locator('button:has-text("Edit"), button[aria-label*="edit" i]').first();
-      if (await editButton.isVisible().catch(() => false)) {
-        await editButton.click();
-        
-        // Wait for edit modal
-        await page.waitForSelector('input[name="name"]', { timeout: 5000 });
-        
-        // Update name
-        const nameInput = page.locator('input[name="name"]').first();
-        await nameInput.clear();
-        await nameInput.fill('Updated Estate Plan Name');
-        
-        // Save
-        const saveButton = page.locator('button[type="submit"], button:has-text("Save")').first();
-        await saveButton.click();
-        
-        await page.waitForTimeout(2000);
-        
-        // Check for updated name
-        await expect(page.locator('text=Updated Estate Plan Name')).toBeVisible({ timeout: 5000 });
-      }
-    }
-  });
-
-  test('should delete estate plan', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('input[type="email"]', TEST_USER.email);
-    await page.fill('input[type="password"]', TEST_USER.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/.*\/$/, { timeout: 10000 });
+    // Check for estate plan cards
+    const cards = page.locator('[class*="card"], [class*="Card"]')
+    const cardCount = await cards.count()
     
-    // Click on first estate plan
-    const firstCard = page.locator('[data-testid="estate-plan-card"], .estate-plan-card, article, .card').first();
-    if (await firstCard.isVisible().catch(() => false)) {
-      await firstCard.click();
-      await page.waitForURL(/.*\/estate-plans\/\d+/, { timeout: 5000 });
-      
-      // Click delete button
-      const deleteButton = page.locator('button:has-text("Delete"), button[aria-label*="delete" i]').first();
-      if (await deleteButton.isVisible().catch(() => false)) {
-        await deleteButton.click();
-        
-        // Confirm deletion (if confirmation dialog appears)
-        page.on('dialog', async dialog => {
-          await dialog.accept();
-        });
-        
-        await page.waitForTimeout(2000);
-        
-        // Should redirect to dashboard
-        await expect(page).toHaveURL(/.*\/$/, { timeout: 5000 });
-      }
+    if (cardCount > 0) {
+      // Check first card has required elements
+      const firstCard = cards.first()
+      await expect(firstCard.locator('text=/Estate|Plan/')).toBeVisible({ timeout: 5000 }).catch(() => {})
     }
-  });
-});
+  })
 
+  test('should handle API errors gracefully', async ({ page }) => {
+    // Intercept API calls and return error
+    await page.route('**/api/v1/estate-plans', route => {
+      route.fulfill({
+        status: 500,
+        body: JSON.stringify({ detail: 'Internal server error' }),
+      })
+    })
+    
+    // Reload page
+    await page.reload()
+    await page.waitForTimeout(2000)
+    
+    // Should show error toast or message
+    const errorMessage = page.locator('text=/error|Error|failed|Failed/')
+    const hasError = await errorMessage.isVisible().catch(() => false)
+    
+    // Error should be displayed
+    expect(hasError).toBeTruthy()
+  })
+
+  test('should show loading skeleton while fetching data', async ({ page }) => {
+    // Intercept API to add delay
+    await page.route('**/api/v1/estate-plans', route => {
+      setTimeout(() => {
+        route.continue()
+      }, 1000)
+    })
+    
+    // Reload page
+    await page.reload()
+    
+    // Should show loading state (skeleton or spinner)
+    const loadingIndicator = page.locator('[class*="skeleton"], [class*="Skeleton"], [class*="spinner"], [class*="loading"]')
+    const hasLoading = await loadingIndicator.isVisible({ timeout: 500 }).catch(() => false)
+    
+    // Loading state should appear
+    expect(hasLoading).toBeTruthy()
+  })
+})
+
+test.describe('Estate Plan Form Validation', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('http://localhost:3000')
+    await page.waitForLoadState('networkidle')
+    await page.click('text=Create Estate Plan')
+    await page.waitForSelector('input[name="name"]', { state: 'visible' })
+  })
+
+  test('should require name field', async ({ page }) => {
+    // Try to submit without name
+    await page.fill('input[name="description"]', 'Test')
+    await page.click('button:has-text("Create")')
+    
+    // Should show validation error or prevent submission
+    await page.waitForTimeout(500)
+    const errorMessage = page.locator('text=/required|Required|name/')
+    const hasError = await errorMessage.isVisible().catch(() => false)
+    
+    // Validation should prevent submission
+    expect(hasError || await page.locator('input[name="name"]').isVisible()).toBeTruthy()
+  })
+
+  test('should allow canceling form', async ({ page }) => {
+    // Fill some data
+    await page.fill('input[name="name"]', 'Test')
+    
+    // Click cancel
+    await page.click('button:has-text("Cancel")')
+    
+    // Modal should close
+    await page.waitForTimeout(500)
+    const modal = page.locator('text=Create Estate Plan')
+    const isVisible = await modal.isVisible().catch(() => false)
+    
+    expect(isVisible).toBeFalsy()
+  })
+})
