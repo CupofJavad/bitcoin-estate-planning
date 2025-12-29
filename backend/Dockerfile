@@ -13,9 +13,29 @@ RUN apt-get update && apt-get install -y \
 # Copy dependency files
 COPY pyproject.toml ./
 
-# Install Python dependencies
+# Install Python dependencies directly from pyproject.toml
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -e ".[dev]"
+    pip install --no-cache-dir \
+    "fastapi>=0.115.0" \
+    "uvicorn[standard]>=0.30.0" \
+    "sqlalchemy>=2.0.0" \
+    "alembic>=1.13.0" \
+    "greenlet>=3.0.0" \
+    "asyncpg>=0.29.0" \
+    "psycopg2-binary>=2.9.9" \
+    "redis>=5.0.0" \
+    "pydantic>=2.9.0" \
+    "pydantic-settings>=2.5.0" \
+    "email-validator>=2.0.0" \
+    "python-jose[cryptography]>=3.3.0" \
+    "passlib[bcrypt]>=1.7.4" \
+    "python-multipart>=0.0.9" \
+    "python-dotenv>=1.0.0" \
+    "base58>=2.1.0" \
+    "bech32>=1.2.0" \
+    "fastapi-users[sqlalchemy]>=12.0.0" \
+    "httpx>=0.27.0" \
+    "openai>=1.0.0"
 
 # Production stage
 FROM python:3.12-slim
