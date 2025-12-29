@@ -20,11 +20,12 @@ class Settings(BaseSettings):
     USERS_VERIFICATION_TOKEN_SECRET: str = ""  # Will use SECRET_KEY if not set
 
     # Database
+    DATABASE_URL: str = ""  # If provided, will be used instead of individual components
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
     POSTGRES_DB: str = "bitcoin_estate"
     POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str
+    POSTGRES_PASSWORD: str = ""  # Optional if DATABASE_URL is provided
 
     # Redis
     REDIS_HOST: str = "localhost"
@@ -57,6 +58,16 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         """Get database connection URL."""
+        # If DATABASE_URL is provided, use it (convert postgresql:// to postgresql+asyncpg://)
+        if self.DATABASE_URL:
+            # Convert postgresql:// to postgresql+asyncpg:// for asyncpg
+            if self.DATABASE_URL.startswith("postgresql://"):
+                return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+            elif self.DATABASE_URL.startswith("postgresql+asyncpg://"):
+                return self.DATABASE_URL
+            else:
+                return self.DATABASE_URL
+        # Otherwise, construct from individual components
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
