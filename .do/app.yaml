@@ -1,0 +1,98 @@
+name: bitcoin-estate-planning
+region: nyc
+
+# Environment variables (set these in DigitalOcean dashboard)
+# Required:
+# - SECRET_KEY
+# - NEXTAUTH_SECRET
+# - POSTGRES_PASSWORD (for managed database)
+# - REDIS_PASSWORD (for managed Redis)
+# - NEXT_PUBLIC_API_URL
+# - NEXTAUTH_URL
+# - CORS_ORIGINS
+
+services:
+  # Backend FastAPI Service
+  - name: backend
+    github:
+      repo: CupofJavad/bitcoin-estate-planning
+      branch: feature/v2-core-enhancements
+      deploy_on_push: true
+    dockerfile_path: backend/Dockerfile
+    dockerfile_context: backend
+    http_port: 8000
+    instance_count: 1
+    instance_size_slug: basic-xxs  # 512MB RAM, 1 vCPU - $5/month
+    health_check:
+      http_path: /health
+    envs:
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATABASE_URL
+        value: ${db.DATABASE_URL}
+        scope: RUN_TIME
+      - key: REDIS_URL
+        value: ${redis.REDIS_URL}
+        scope: RUN_TIME
+      - key: SECRET_KEY
+        value: ${SECRET_KEY}
+        scope: RUN_TIME
+        type: SECRET
+      - key: BITCOIN_NETWORK
+        value: testnet
+      - key: CORS_ORIGINS
+        value: ${CORS_ORIGINS}
+        scope: RUN_TIME
+    routes:
+      - path: /api
+    run_command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+
+  # Frontend Next.js Service
+  - name: frontend
+    github:
+      repo: CupofJavad/bitcoin-estate-planning
+      branch: feature/v2-core-enhancements
+      deploy_on_push: true
+    dockerfile_path: frontend/client-portal/Dockerfile
+    dockerfile_context: frontend/client-portal
+    http_port: 3000
+    instance_count: 1
+    instance_size_slug: basic-xxs  # 512MB RAM, 1 vCPU - $5/month
+    health_check:
+      http_path: /
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: ${NEXT_PUBLIC_API_URL}
+        scope: RUN_TIME
+      - key: NEXTAUTH_URL
+        value: ${NEXTAUTH_URL}
+        scope: RUN_TIME
+      - key: NEXTAUTH_SECRET
+        value: ${NEXTAUTH_SECRET}
+        scope: RUN_TIME
+        type: SECRET
+    routes:
+      - path: /
+
+# Managed PostgreSQL Database
+databases:
+  - name: db
+    engine: PG
+    production: true
+    version: "15"
+    cluster_name: bitcoin-estate-db
+    db_name: bitcoin_estate
+    db_user: bitcoin_app
+
+# Managed Redis
+databases:
+  - name: redis
+    engine: REDIS
+    production: true
+    version: "7"
+    cluster_name: bitcoin-estate-redis
+
