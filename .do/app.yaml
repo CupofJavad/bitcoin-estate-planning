@@ -78,8 +78,9 @@ services:
     routes:
       - path: /
 
-# Managed PostgreSQL Database
+# Managed Databases
 databases:
+  # PostgreSQL Database
   - name: db
     engine: PG
     production: true
@@ -87,9 +88,8 @@ databases:
     cluster_name: bitcoin-estate-db
     db_name: bitcoin_estate
     db_user: bitcoin_app
-
-# Managed Redis
-databases:
+  
+  # Redis Cache
   - name: redis
     engine: REDIS
     production: true
