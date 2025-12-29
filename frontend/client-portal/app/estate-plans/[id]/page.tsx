@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { EstatePlanWithRelations, Beneficiary, TimelockPolicy, estatePlansApi, beneficiariesApi, timelockPoliciesApi } from '@/lib/api'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
@@ -39,7 +39,7 @@ export default function EstatePlanDetailPage() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
 
-  const fetchEstatePlan = async () => {
+  const fetchEstatePlan = useCallback(async () => {
     try {
       setLoading(true)
       const data = await estatePlansApi.get(id)
@@ -51,13 +51,13 @@ export default function EstatePlanDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
 
   useEffect(() => {
     if (id) {
       fetchEstatePlan()
     }
-  }, [id])
+  }, [id, fetchEstatePlan])
 
   const totalAllocation = estatePlan?.beneficiaries.reduce((sum, b) => sum + Number(b.allocation_percentage), 0) || 0
 

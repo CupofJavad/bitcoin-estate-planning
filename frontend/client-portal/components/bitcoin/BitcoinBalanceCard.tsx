@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { bitcoinApi, BitcoinBalance } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { RefreshCw, Copy, Check, Loader2, AlertCircle } from 'lucide-react'
@@ -15,7 +15,7 @@ export function BitcoinBalanceCard({ address }: BitcoinBalanceCardProps) {
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const fetchBalance = async (useCache = true) => {
+  const fetchBalance = useCallback(async (useCache = true) => {
     if (!address) return
 
     setLoading(true)
@@ -32,13 +32,13 @@ export function BitcoinBalanceCard({ address }: BitcoinBalanceCardProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [address])
 
   useEffect(() => {
     if (address) {
       fetchBalance(true)
     }
-  }, [address])
+  }, [address, fetchBalance])
 
   const handleCopy = async () => {
     try {
