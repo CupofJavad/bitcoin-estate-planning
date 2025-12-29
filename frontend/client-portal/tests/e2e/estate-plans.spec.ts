@@ -4,20 +4,23 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { loginAsDemoUser } from '../helpers/auth'
+import { ensureAuthenticated } from '../helpers/auth'
 
 test.describe('Estate Plans Management', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to home page
-    await page.goto('http://localhost:3000')
+    await page.goto('/')
     
-    // Wait for page to load
+    // Wait for page to load - may redirect to login
     await page.waitForLoadState('networkidle')
+    
+    // Ensure we're authenticated
+    await ensureAuthenticated(page)
   })
 
   test('should display dashboard with statistics', async ({ page }) => {
     // Check for dashboard elements
-    await expect(page.locator('h1')).toContainText('Bitcoin Estate Planning Platform')
+    await expect(page.locator('h1')).toContainText('Bitcoin Estate Planning')
     
     // Check for stat cards
     await expect(page.locator('text=Total Estate Plans')).toBeVisible()

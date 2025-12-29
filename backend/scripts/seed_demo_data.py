@@ -13,14 +13,22 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.core.database import async_session_maker
+from app.core.database import AsyncSessionLocal as async_session_maker
 from app.models.user import User
 from app.models.estate_plan import EstatePlan
 from app.models.beneficiary import Beneficiary
 from app.models.timelock_policy import TimelockPolicy
 from passlib.context import CryptContext
+import bcrypt
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Direct bcrypt hashing to avoid passlib version issues
+def hash_password(password: str) -> str:
+    """Hash password using bcrypt directly."""
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 
 async def create_demo_user(session: AsyncSession) -> User:
@@ -36,7 +44,9 @@ async def create_demo_user(session: AsyncSession) -> User:
         return existing_user
     
     # Create new demo user
-    hashed_password = pwd_context.hash("demo123456")
+    # Use the expected demo password
+    password = "demo123456"
+    hashed_password = hash_password(password)
     
     demo_user = User(
         email="demo@example.com",

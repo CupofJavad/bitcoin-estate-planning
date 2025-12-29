@@ -12,7 +12,7 @@ from app.core.database import Base
 from app.models import EstatePlan, Beneficiary, TimelockPolicy, User  # noqa: F401 - v1 models
 from app.models.v2 import (  # noqa: F401 - v2 models
     Party, PartyRole, ContactInfo, Account, AuthCredential, Device,
-    Jurisdiction, EstatePlan as EstatePlanV2, EstatePlanVersion, EstatePlanParticipant,
+    Jurisdiction, EstatePlanV2, EstatePlanVersion, EstatePlanParticipant,
     BeneficiaryAllocation, LegalDocument, LifeEvent,
     KYCCase, KYCDocument, SanctionsScreening, PartyRiskProfile,
     Network, Wallet, WalletPolicyVersion, ScriptTemplate, TimelockConfig,

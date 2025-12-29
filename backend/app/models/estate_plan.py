@@ -9,9 +9,12 @@ from app.core.database import Base
 
 
 class EstatePlan(Base):
-    """Estate Plan model."""
+    """Estate Plan model (v1)."""
 
     __tablename__ = "estate_plans"
+    __mapper_args__ = {
+        "polymorphic_identity": "estate_plan_v1",
+    }
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False, index=True)
@@ -27,9 +30,15 @@ class EstatePlan(Base):
         nullable=False,
     )
 
-    # Relationships
-    beneficiaries = relationship("Beneficiary", back_populates="estate_plan", cascade="all, delete-orphan")
+    # Relationships - use string references (will be resolved correctly now)
+    beneficiaries = relationship(
+        "Beneficiary",
+        back_populates="estate_plan",
+        cascade="all, delete-orphan"
+    )
     timelock_policies = relationship(
-        "TimelockPolicy", back_populates="estate_plan", cascade="all, delete-orphan"
+        "TimelockPolicy",
+        back_populates="estate_plan",
+        cascade="all, delete-orphan"
     )
 

@@ -24,19 +24,36 @@ async def get_demo_user(
 ) -> User:
     """
     Temporary helper for local testing:
-    return the first user in the database as the current user.
+    return the demo user (demo@example.com) or first user as fallback.
 
     This bypasses authentication so the frontend can be exercised
     without wiring NextAuth tokens into the FastAPI auth layer.
     """
-    result = await db.execute(select(User).order_by(User.id))
-    user = result.scalars().first()
-    if not user:
+    try:
+        # Try to find demo user first
+        result = await db.execute(select(User).where(User.email == "demo@example.com"))
+        user = result.scalar_one_or_none()
+        
+        # Fallback to first user if demo user doesn't exist
+        if not user:
+            result = await db.execute(select(User).order_by(User.id))
+            user = result.scalars().first()
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No users found in database for demo mode",
+            )
+        return user
+    except Exception as e:
+        # Log error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in get_demo_user: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No users found in database for demo mode",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting demo user: {str(e)}",
         )
-    return user
 
 
 @router.post("/", response_model=EstatePlanResponse, status_code=status.HTTP_201_CREATED)

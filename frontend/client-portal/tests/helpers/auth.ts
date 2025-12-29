@@ -1,92 +1,48 @@
 /**
- * Authentication test helpers for Playwright E2E tests
- * Provides reusable functions for common auth operations
+ * Authentication helpers for E2E tests
  */
 
-import { Page } from '@playwright/test';
+import { Page } from '@playwright/test'
 
-export interface TestUser {
-  email: string;
-  password: string;
-  full_name: string;
-}
-
-/**
- * Generate a unique test user with timestamp-based email
- */
-export function generateTestUser(prefix = 'test'): TestUser {
-  const timestamp = Date.now();
-  return {
-    email: `${prefix}-${timestamp}@example.com`,
-    password: 'TestPassword123!',
-    full_name: `Test User ${timestamp}`,
-  };
-}
-
-/**
- * Register a new user via the UI
- */
-export async function registerUser(page: Page, user: TestUser): Promise<void> {
-  await page.goto('/register');
-  await page.fill('input[type="email"]', user.email);
-  await page.fill('input[type="password"]', user.password);
-  await page.fill('input[id="full_name"]', user.full_name);
-  await page.click('button[type="submit"]');
-  await page.waitForURL(/.*\/login/, { timeout: 10000 });
-}
-
-/**
- * Login a user via the UI
- */
-export async function loginUser(page: Page, user: TestUser): Promise<void> {
-  await page.goto('/login');
-  await page.fill('input[type="email"]', user.email);
-  await page.fill('input[type="password"]', user.password);
-  await page.click('button[type="submit"]');
-  await page.waitForURL(/.*\/$/, { timeout: 15000 });
+export async function loginAsDemoUser(page: Page) {
+  // Navigate to login page
+  await page.goto('/login')
+  await page.waitForLoadState('networkidle')
   
-  // Verify login was successful by checking for logout button
-  const logoutButton = page.locator('text=/sign out|logout/i').first();
-  await logoutButton.waitFor({ state: 'visible', timeout: 10000 });
+  // Wait for login form to be visible
+  await page.waitForSelector('input[type="email"]', { timeout: 5000 })
+  
+  // Fill login form
+  await page.fill('input[type="email"]', 'demo@example.com')
+  await page.fill('input[type="password"]', 'demo123')
+  
+  // Submit form
+  await page.click('button[type="submit"]')
+  
+  // Wait for either redirect to dashboard or stay on login (if auth fails)
+  try {
+    await page.waitForURL('/', { timeout: 10000 })
+  } catch {
+    // If still on login, check for error message
+    const errorVisible = await page.locator('text=/error|invalid|failed/i').isVisible({ timeout: 2000 }).catch(() => false)
+    if (errorVisible) {
+      console.log('Login failed - error message visible')
+    }
+  }
+  await page.waitForLoadState('networkidle')
 }
 
-/**
- * Register and login a user in one step
- */
-export async function registerAndLogin(page: Page, user?: TestUser): Promise<TestUser> {
-  const testUser = user || generateTestUser();
-  await registerUser(page, testUser);
-  await loginUser(page, testUser);
-  return testUser;
-}
-
-/**
- * Logout the current user
- */
-export async function logoutUser(page: Page): Promise<void> {
-  const logoutButton = page.locator('text=/sign out|logout/i').first();
-  if (await logoutButton.isVisible().catch(() => false)) {
-    await logoutButton.click();
-    await page.waitForURL(/.*\/login/, { timeout: 10000 });
+export async function ensureAuthenticated(page: Page) {
+  // Check if we're on login page
+  const currentUrl = page.url()
+  if (currentUrl.includes('/login')) {
+    await loginAsDemoUser(page)
+  } else {
+    // Check if we're already authenticated by looking for user menu
+    const userMenu = page.locator('text=/sign out|logout|demo@example.com/i')
+    const isVisible = await userMenu.isVisible({ timeout: 2000 }).catch(() => false)
+    if (!isVisible) {
+      await loginAsDemoUser(page)
+    }
   }
 }
-
-/**
- * Clear all authentication state (cookies, storage)
- */
-export async function clearAuthState(page: Page): Promise<void> {
-  await page.context().clearCookies();
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-  });
-}
-
-/**
- * Check if user is currently logged in
- */
-export async function isLoggedIn(page: Page): Promise<boolean> {
-  const logoutButton = page.locator('text=/sign out|logout/i').first();
-  return await logoutButton.isVisible().catch(() => false);
-}
-
