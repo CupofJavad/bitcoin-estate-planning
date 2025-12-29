@@ -1,178 +1,152 @@
-# Deploy to Lunaverse - Right Now! 🚀
+# Lunaverse Deployment - Quick Start Guide
 
-## You're Already Connected - Let's Deploy!
+**Deploy the latest version (feature/v2-core-enhancements) to your Lunaverse server.**
 
-### Step 1: Create .env.prod File
+## 🚀 Quick Deployment (5 Steps)
+
+### Step 1: Connect to Lunaverse Server
 
 ```bash
-# On Lunaverse server (you're already there)
-cd ~/bitcoin-estate-planning/infra/docker
+# Via Tailscale (recommended)
+ssh -p 22 luna@100.80.191.90
 
-# Copy the template
-cp .env.prod.template .env.prod
+# Or via direct IP
+ssh -p 22 luna@192.168.1.172
+```
 
-# Edit with your values
+### Step 2: Clone/Update Repository
+
+```bash
+# If repository doesn't exist
+cd /opt
+git clone https://github.com/CupofJavad/bitcoin-estate-planning.git
+cd bitcoin-estate-planning
+
+# If repository exists, update it
+cd /opt/bitcoin-estate-planning
+git fetch origin
+git checkout feature/v2-core-enhancements
+git pull origin feature/v2-core-enhancements
+```
+
+### Step 3: Create Production Environment File
+
+```bash
+cd /opt/bitcoin-estate-planning/infra/docker
+
+# Run the environment file creation script
+bash CREATE_ENV_PROD.sh
+
+# Edit the file with your actual values
 nano .env.prod
 ```
 
-### Step 2: Update .env.prod with Your Values
+**Required values to update in `.env.prod`:**
+- `POSTGRES_PASSWORD` - Generate: `openssl rand -base64 24`
+- `SECRET_KEY` - Generate: `openssl rand -base64 32`
+- `NEXTAUTH_SECRET` - Generate: `openssl rand -base64 32`
+- `LUNAVERSE_SSH_PASSWORD` - Your actual SSH password
+- `OPENAI_API_KEY` - If you want chatbot functionality
+- Update URLs to use your Tailscale IP or domain
 
-**Replace these placeholders in .env.prod:**
-
-1. **POSTGRES_PASSWORD**: Generate a strong password
-   ```bash
-   openssl rand -base64 24
-   ```
-
-2. **POSTGRES_SUPERUSER_PASSWORD**: Generate another strong password
-   ```bash
-   openssl rand -base64 24
-   ```
-
-3. **SECRET_KEY**: Generate for backend
-   ```bash
-   openssl rand -base64 32
-   ```
-
-4. **NEXTAUTH_SECRET**: Generate for frontend
-   ```bash
-   openssl rand -base64 32
-   ```
-
-5. **LUNAVERSE_SSH_PASSWORD**: Use your actual SSH password from your secrets file
-
-6. **OPENAI_API_KEY**: (Optional) Add if you want chatbot to work
-
-7. **DEFAULT_ADMIN_PASSWORD**: Choose a secure admin password
-
-**Example .env.prod (with your format):**
-```bash
-# Copy from your secrets file and adapt:
-# - POSTGRES_USER=postgres (keep as is)
-# - POSTGRES_PASSWORD="<generated>"
-# - SECRET_KEY="<generated>"
-# - NEXTAUTH_SECRET="<generated>"
-# - LUNAVERSE_SSH_PASSWORD="Lunatic_2025*!" (from your secrets)
-```
-
-### Step 3: Create SSL Directory (for HTTPS)
+### Step 4: Deploy Services
 
 ```bash
-# Create SSL directory
-mkdir -p ssl
+cd /opt/bitcoin-estate-planning/infra/docker
 
-# Generate self-signed certificate (for testing)
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout ssl/key.pem \
-  -out ssl/cert.pem \
-  -subj "/C=US/ST=State/L=City/O=Organization/CN=lunaverse"
-```
+# Option A: Use automated deployment script
+cd /opt/bitcoin-estate-planning
+bash scripts/deploy-to-lunaverse.sh
 
-### Step 4: Make Deployment Script Executable
-
-```bash
-cd ~/bitcoin-estate-planning/infra/docker
-chmod +x DEPLOY_MANUAL.sh
-```
-
-### Step 5: Run Deployment
-
-```bash
-# Run the deployment script
-./DEPLOY_MANUAL.sh
-```
-
-### Alternative: Manual Commands (if script doesn't work)
-
-```bash
-# Build and start
+# Option B: Manual deployment
+cd /opt/bitcoin-estate-planning/infra/docker
 docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+```
 
-# Wait a moment
-sleep 15
+### Step 5: Run Database Migrations
+
+```bash
+cd /opt/bitcoin-estate-planning/infra/docker
 
 # Run migrations
 docker-compose -f docker-compose.prod.yml exec backend alembic upgrade head
 
-# Check status
+# Seed demo data (optional)
+docker-compose -f docker-compose.prod.yml exec backend python scripts/seed_demo_data.py
+```
+
+## ✅ Verify Deployment
+
+```bash
+# Check all services are running
 docker-compose -f docker-compose.prod.yml ps
 
-# Check logs
-docker-compose -f docker-compose.prod.yml logs -f
-```
+# Check backend health
+curl http://localhost:8000/health
 
-### Step 6: Configure Firewall (if needed)
+# Check frontend
+curl http://localhost:3000
 
-```bash
-# Allow necessary ports
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw allow 3000/tcp
-sudo ufw allow 8000/tcp
-sudo ufw enable
-```
-
-### Step 7: Access Your Application
-
-**From your MacBook:**
-- Frontend: `http://100.80.191.90:3000`
-- Backend API Docs: `http://100.80.191.90:8000/docs`
-- Backend Health: `http://100.80.191.90:8000/health`
-
----
-
-## Quick Reference Commands
-
-```bash
 # View logs
 docker-compose -f docker-compose.prod.yml logs -f
-
-# Restart services
-docker-compose -f docker-compose.prod.yml restart
-
-# Stop services
-docker-compose -f docker-compose.prod.yml down
-
-# Start services
-docker-compose -f docker-compose.prod.yml up -d
-
-# Check status
-docker-compose -f docker-compose.prod.yml ps
 ```
 
----
+## 🌐 Access Your Application
 
-## Troubleshooting
+**Via Tailscale:**
+- Frontend: `http://100.80.191.90:3000` or `http://100.80.191.90`
+- Backend API: `http://100.80.191.90:8000`
+- API Docs: `http://100.80.191.90:8000/docs`
 
-### Permission Denied
-```bash
-# Make sure you're in docker group
-newgrp docker
-# Or log out and back in
-```
+**Via Direct IP:**
+- Frontend: `http://192.168.1.172:3000` or `http://192.168.1.172`
+- Backend API: `http://192.168.1.172:8000`
+- API Docs: `http://192.168.1.172:8000/docs`
+
+## 🔑 Demo User Credentials
+
+After seeding demo data:
+- **Email:** `demo@example.com`
+- **Password:** `demo123456`
+
+## 📝 Important Notes
+
+1. **Ports:** Make sure ports 80, 443, 3000, and 8000 are accessible
+2. **Firewall:** Configure firewall to allow these ports
+3. **SSL:** For production, set up SSL certificates (see full guide)
+4. **Backups:** Set up automated database backups
+5. **Updates:** Pull latest code and redeploy when needed
+
+## 🆘 Troubleshooting
 
 ### Services Won't Start
 ```bash
 # Check logs
 docker-compose -f docker-compose.prod.yml logs
 
-# Check disk space
-df -h
-
-# Check memory
-free -h
+# Check specific service
+docker-compose -f docker-compose.prod.yml logs backend
 ```
 
-### Database Connection Issues
+### Database Issues
 ```bash
-# Check PostgreSQL is running
+# Check database is running
 docker-compose -f docker-compose.prod.yml ps postgres
 
-# Check database logs
-docker-compose -f docker-compose.prod.yml logs postgres
+# Test connection
+docker-compose -f docker-compose.prod.yml exec postgres psql -U postgres -d bitcoin_estate
 ```
+
+### Frontend Can't Connect to Backend
+- Verify `NEXT_PUBLIC_API_URL` in `.env.prod` matches your backend URL
+- Check CORS configuration
+- Verify backend is running: `curl http://localhost:8000/health`
+
+## 📚 Full Documentation
+
+- **Complete Guide:** [LUNAVERSE_DEPLOYMENT.md](LUNAVERSE_DEPLOYMENT.md)
+- **Deployment Decision:** [DEPLOYMENT_DECISION.md](DEPLOYMENT_DECISION.md)
 
 ---
 
-**You're ready to deploy! Follow the steps above.** 🚀
-
+**Last Updated:** December 29, 2024
