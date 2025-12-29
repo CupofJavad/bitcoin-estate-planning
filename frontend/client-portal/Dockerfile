@@ -34,23 +34,15 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy necessary files
-# Next.js standalone output structure: .next/standalone contains app/ directory with server.js
+# Next.js standalone output structure: .next/standalone contains app/ directory with server.js and node_modules
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Standalone build creates nested structure: ./app/server.js
-# Move server.js to root for easier execution
-RUN if [ -f ./app/server.js ]; then \
-      cp ./app/server.js ./server.js; \
-      echo "✅ server.js copied from ./app/server.js"; \
-    elif [ -f server.js ]; then \
-      echo "✅ server.js already in root"; \
-    else \
-      echo "ERROR: server.js not found"; \
-      find . -name "server.js" -type f | head -5; \
-      exit 1; \
-    fi
+# Standalone build creates nested structure: ./app/server.js and ./app/node_modules
+# The server.js needs to run from the app directory or we need to adjust paths
+# Let's check what's in the standalone build and adjust accordingly
+WORKDIR /app/app
 
 # Set correct permissions
 RUN chown -R nextjs:nodejs /app
@@ -66,5 +58,6 @@ ENV HOSTNAME "0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
 
+# Run from the app directory where server.js and node_modules are located
 CMD ["node", "server.js"]
 
