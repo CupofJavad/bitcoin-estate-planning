@@ -38,6 +38,15 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
+# Ensure server.js exists in the root
+RUN if [ ! -f server.js ]; then \
+      if [ -f .next/standalone/server.js ]; then \
+        cp .next/standalone/server.js ./server.js; \
+      elif [ -f .next/server.js ]; then \
+        cp .next/server.js ./server.js; \
+      fi; \
+    fi
+
 # Set correct permissions
 RUN chown -R nextjs:nodejs /app
 

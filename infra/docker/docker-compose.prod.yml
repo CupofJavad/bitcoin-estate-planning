@@ -41,6 +41,7 @@ services:
     container_name: bitcoin-estate-backend-prod
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-bitcoin_estate}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
       - BITCOIN_NETWORK=${BITCOIN_NETWORK:-testnet}
