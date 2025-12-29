@@ -16,6 +16,13 @@ const authOptions = {
           return null
         }
 
+        const email = typeof credentials.email === 'string' ? credentials.email : ''
+        const password = typeof credentials.password === 'string' ? credentials.password : ''
+
+        if (!email || !password) {
+          return null
+        }
+
         try {
           // Login to FastAPI backend
           const loginResponse = await fetch(`${API_URL}/api/v1/auth/jwt/login`, {
@@ -24,8 +31,8 @@ const authOptions = {
               'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-              username: credentials.email || '',
-              password: credentials.password || '',
+              username: email,
+              password: password,
             }),
           })
 
