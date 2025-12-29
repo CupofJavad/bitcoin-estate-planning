@@ -126,7 +126,7 @@ const authOptions = {
   debug: process.env.NODE_ENV === 'development',
   // Ensure proper error handling for session fetching
   events: {
-    async signIn({ user }) {
+    async signIn({ user }: { user?: any }) {
       console.log('Sign in event:', { user: user?.email })
     },
     async signOut() {
