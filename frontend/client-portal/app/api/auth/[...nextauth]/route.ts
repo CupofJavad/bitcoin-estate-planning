@@ -24,8 +24,8 @@ const authOptions = {
               'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-              username: credentials.email,
-              password: credentials.password,
+              username: credentials.email || '',
+              password: credentials.password || '',
             }),
           })
 
